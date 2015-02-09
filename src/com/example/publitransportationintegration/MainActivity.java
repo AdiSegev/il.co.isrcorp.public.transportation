@@ -298,7 +298,7 @@ private class ServiceResponseHanlder extends Handler {
 		
 		@Override
 		public void handleMessage(Message msg) {
-			
+			int i = 5;
 			switch (msg.what){
 			case LOST_SPM_COMMUNICATION:
 				 progress = new WaitForSpmDialog(MainActivity.this);
