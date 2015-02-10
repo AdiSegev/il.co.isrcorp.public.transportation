@@ -301,6 +301,7 @@ public class MainActivity extends Activity implements Observer{
 		// Type - data's type, and data as String array.
 		@Override
 		public void update(Observable observable, Object data) {
+			int i = 9;
 			handleHelloCommand();
 			if (data instanceof EventsFromSPM) {
 
