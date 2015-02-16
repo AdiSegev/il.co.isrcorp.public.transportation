@@ -330,7 +330,7 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		if(spmCommunicationLost){
 			spmCommunicationLost = false;
 			messagesToSpmSender.sendSPMInitCommandsMessage();
-			updateClient(MainActivity.RESTORE_SPM_COMMUNICATION);
+//			updateClient(MainActivity.RESTORE_SPM_COMMUNICATION);
 		}
 	}
 	
@@ -382,7 +382,7 @@ public class SpmParserBrisgeService extends Service implements Observer{
 				  
 				  // notify app that SPM communication lost
 				  System.out.println("SPM COMMUNICATION LOST");
-				  updateClient(MainActivity.LOST_SPM_COMMUNICATION);
+//				  updateClient(MainActivity.LOST_SPM_COMMUNICATION);
 				  
 //				  new Thread(new Runnable() {
 //

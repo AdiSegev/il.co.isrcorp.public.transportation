@@ -304,7 +304,6 @@ public class MainActivity extends Activity implements Observer{
 			int i = 9;
 			handleHelloCommand();
 			if (data instanceof EventsFromSPM) {
-
 				String[] result = (String[]) ((EventsFromSPM) data).getData();
 				String dataToJavascript;
 			
@@ -411,6 +410,10 @@ public class MainActivity extends Activity implements Observer{
 					
 					int newProgress = ((int)(Float.valueOf((result[1].substring(0, result[1].length()-1)))).floatValue()); 
 					
+					if(newProgress == 100){
+						// remove all stops from stops list
+						currentRouteInfo.routeStopsList.clear();
+					}
 					
 				break;
 				case PublicTransportation.APPROACHSTOP:

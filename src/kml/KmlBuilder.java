@@ -23,15 +23,12 @@ public class KmlBuilder {
 	 * 
 	 */
 	public void buildKML() {
-		long time = System.currentTimeMillis();
 		System.out.println("build kml start ");
 		String fullKmlContent = addHeader(currentRouteInfo.getRouteName());
 	
 		fullKmlContent += addRoutesCoords(currentRouteInfo.currentRouteCoordsReceived);
 
 		
-		
-		time = System.currentTimeMillis();
 		
 		for (Entry<Integer,RouteStop> entry : currentRouteInfo.routeStopsList.entrySet()) {
 			
@@ -42,7 +39,7 @@ public class KmlBuilder {
 		
 		MyUtils.saveKmlFile(currentRouteInfo.currentRouteFileName, fullKmlContent);
 		
-		System.out.println("build kml end "+(System.currentTimeMillis()-time)/1000);
+		System.out.println("build kml end ");
 		
 	}
 	public String addHeader(String rteName){
