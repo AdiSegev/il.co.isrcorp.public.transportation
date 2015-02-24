@@ -361,7 +361,7 @@
 //protected void showServerMessage(CharSequence messageName,
 //		CharSequence content) {
 //	
-//	Utils.logger("message from IGO "+content.toString());
+//	UpdateUtils.logger("message from IGO "+content.toString());
 //}
 //
 //private class ServerHelloBroadcastReceiver extends BroadcastReceiver {
