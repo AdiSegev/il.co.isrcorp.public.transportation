@@ -20,6 +20,8 @@ import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.os.Looper;
 import android.widget.Toast;
 
 /** This class would manage updater process.
@@ -33,11 +35,18 @@ public class UpdateManager{
 	private Context mContext;
 	UpdateConfiguration config;
 	private NetworkConnectivity networkConnectivity;
+	protected boolean downloadStarted = false;
 	
 
 	public UpdateManager(Context context){
 		mContext = context;
 		UpdateUtils.mContext = mContext;
+		
+		// create SAVE folder for saving apk file
+		File updateConfigurationFolder =  new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SAVE");
+		
+		if(!updateConfigurationFolder.exists())
+			updateConfigurationFolder.mkdir();
 		
 		// create SAVE folder for saving apk file
 				File mainFolder =  new File(mContext.getExternalFilesDir(null), "SAVE");
@@ -61,11 +70,17 @@ public class UpdateManager{
 		
 		networkConnectivity = new NetworkConnectivity(mContext, this);
 		
-		// check if we need to updater current version
-		if (config != null && config.updateRequired && isApkFileExists()){ // in case we already have the apk file, start install process
+		if (config == null)
+			return;
+		
+		if (!config.updateRequired)
+			return;
+		
+		// check if we can start downloading and installing new version
+		if (isApkFileExists()){ // in case we already have the apk file, start install process
 			checkStartingApplicationInstallation();
 		}
-		else if (config != null && config.updateRequired && !isApkFileExists()){ // in case we don't have apk file, download it
+		else if (networkConnectivity.gotValidNetworkConnection()){ // in case we don't have apk file, download it
 			downloadApk();
 		}
 	}
@@ -76,16 +91,18 @@ public class UpdateManager{
 	if(netInfo == null)
 		return;
 	
+	downloadStarted = true;
+	
 	// start downloading
 	new AsyncTask <Object, Void, Object> ()  {
 		    public Object doInBackground(Object... obj) {
 		    	 try {	        
 			        FTPClient f = new FTPClient();
 			        f.connect(config.ftpServerAddress);
-			        boolean login= f.login(config.ftpServerAddress, config.FTPPassword);
+			        boolean login= f.login(config.FTPUserName, config.FTPPassword);
 			        int count=0;
 			        while((!login)&&(count<5)){
-			        	 login= f.login(config.ftpServerAddress, config.FTPPassword);
+			        	 login= f.login(config.FTPUserName, config.FTPPassword);
 			        	 count++;
 			        }
 			        if(!login){
@@ -96,8 +113,15 @@ public class UpdateManager{
 			        f.setFileType(FTP.BINARY_FILE_TYPE);
 			        FTPFile[] files = f.listFiles(config.filePath);
 			        boolean findFile=false;
-			        
-			        Toast.makeText(mContext, "download start", Toast.LENGTH_SHORT).show();
+			        new Thread(new Runnable() {
+
+						public void run() {
+							Looper.prepare();
+							 Toast.makeText(mContext, "download start", Toast.LENGTH_SHORT).show();
+							Looper.loop();
+						}
+					}).start();
+			       
 			        
 			        for (int i=0; i < files.length; i++) {
 			            if (config.apkName.equalsIgnoreCase(files[i].getName())) {
@@ -136,7 +160,16 @@ public class UpdateManager{
 		  public void onPostExecute(Object res) {
 			  if (res instanceof Boolean){
 				 if((Boolean)res){
-					  Toast.makeText(mContext, "download success", Toast.LENGTH_SHORT).show();
+					 downloadStarted = false;
+					 new Thread(new Runnable() {
+
+							public void run() {
+								Looper.prepare();
+								 Toast.makeText(mContext, "download success", Toast.LENGTH_SHORT).show();
+								Looper.loop();
+							}
+						}).start();
+					 
 					 checkStartingApplicationInstallation();
 				 }
 			  }
@@ -147,7 +180,7 @@ public class UpdateManager{
 	}
 
 	
-	private boolean isApkFileExists() {
+	protected boolean isApkFileExists() {
 		File file = new File(mContext.getExternalFilesDir(null)+"/SAVE",config.apkName);
 		return file.exists();
 	}
@@ -273,7 +306,21 @@ public class UpdateManager{
 		config.apkName = updateConfigInfo[6];
 		
 		try{
-		config.ConnectionType = Integer.valueOf(updateConfigInfo[7]);	
+			switch(Integer.valueOf(updateConfigInfo[7])){
+			case 1:
+				config.connectionType = NetworkConnectivity.TYPE_WIFI;
+				break;
+			case 2:
+				config.connectionType = NetworkConnectivity.TYPE_ETHERNET;
+				break;
+			case 3:
+				config.connectionType = NetworkConnectivity.TYPE_SIM;
+				break;
+			case 4:
+				config.connectionType = NetworkConnectivity.TYPE_ALL;
+				break;
+			}
+			
 		}
 		catch (NumberFormatException formatException){
 			UpdateUtils.logger("illegal connection type: "+updateConfigInfo[7]);
@@ -281,7 +328,7 @@ public class UpdateManager{
 		}
 		
 		// we need to check if we should use WiFi. If we souldn't use it, we can ignore the following fields.
-		if (config.ConnectionType !=0 && (config.ConnectionType == NetworkConnectivity.TYPE_WIFI ||config.ConnectionType == NetworkConnectivity.TYPE_ALL)){
+		if (config.connectionType == NetworkConnectivity.TYPE_WIFI ||config.connectionType == NetworkConnectivity.TYPE_ALL){
 		try{
 			int publicAllowed = Integer.valueOf(updateConfigInfo[8]);
 			config.publicWiFiAllowed = publicAllowed == 1 ? true:false;	
@@ -296,7 +343,7 @@ public class UpdateManager{
 		}
 		
 		// if we're allowed to use all network connections, we need to know if we should prefer wiFi over mobile network.
-		if(config.ConnectionType !=0 && (config.ConnectionType == NetworkConnectivity.TYPE_ALL)){
+		if(config.connectionType == NetworkConnectivity.TYPE_ALL){
 			try{
 				int prefferdConnection = Integer.valueOf(updateConfigInfo[10]);
 				config.preferWiFiOverMobile = prefferdConnection == 1 ? true:false;	
@@ -325,14 +372,24 @@ public class UpdateManager{
 		for (String networkItem : wifiNetworkList) {
 			splitedNetwork = networkItem.split("\\*");
 			network = new WiFiNetwork();
+			
 			try{
+			int networkSecurity = Integer.valueOf(splitedNetwork[0]);
 			network.setSecurity(Integer.valueOf(splitedNetwork[0]));
+			// if it's secured network, we need to store the password
+			if(networkSecurity != WiFiNetwork.NOT_SECURED){
+			
+			network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
+			network.setPassword("\""+ splitedNetwork[2] +"\""); // Please note the quotes. String should contain password in quotes
+			}
+			else{
+				network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
+			}
 			}
 			catch (NumberFormatException formatException){
 				UpdateUtils.logger("illegal security: "+splitedNetwork[0]);
 			}
-			network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
-			network.setPassword("\""+ splitedNetwork[2] +"\""); // Please note the quotes. String should contain password in quotes
+			
 			
 			config.wiFiNetworksDetails.add(network);
 			
@@ -351,14 +408,13 @@ public class UpdateManager{
 		UpdateUtils.saveUpdateConfigToFile(UPDATE_CONFIG_FILENAME, config);
 		
 		// check if we suppose to use only WiFi. 
-		// If so, we don't need to start downloading process, it'll be done when we have WiFi connection.
-		if(config.ConnectionType == NetworkConnectivity.TYPE_WIFI || (config.ConnectionType == NetworkConnectivity.TYPE_ALL && config.preferWiFiOverMobile)){
-			networkConnectivity.enableWiFi();
+		if(config.connectionType == NetworkConnectivity.TYPE_WIFI || (config.connectionType == NetworkConnectivity.TYPE_ALL && config.preferWiFiOverMobile)){
+			
+			if(networkConnectivity.isWiFiEnabled() && networkConnectivity.connectToVaildNetwork()){
+			downloadApk();
 			return;
-		}
-			
-			
-		if(networkConnectivity.getNetworkConnection()!= null){
+			}
+		} else if(networkConnectivity.getNetworkConnection()!= null){
 			downloadApk();
 		}
 		
@@ -374,6 +430,65 @@ public class UpdateManager{
 		
 	}
 
+	/** This method returns the current update configurations.<br>
+	 *  
+	 * @return current update configuration or "CurrentConfig\\cNoConfig" if there's no configurations
+	 */
+	public String getUpdateConfiguration(){
+		
+		String configuration = "CurrentConfig\\c";
+		
+		if(config != null){
+			configuration += config.ftpServerAddress+"\\c";
+			configuration += config.FTPUserName+"\\c";
+			configuration += config.FTPPassword+"\\c";
+			configuration += config.filePath+"\\c";
+			configuration += config.apkName+"\\c";
+			
+			switch (config.connectionType){
+			case NetworkConnectivity.TYPE_WIFI:
+				configuration += 1+"\\c";
+				break;
+			case NetworkConnectivity.TYPE_ETHERNET:
+				configuration += 2+"\\c";
+				break;
+			case NetworkConnectivity.TYPE_SIM:
+				configuration +=3+"\\c";
+				break;
+			case NetworkConnectivity.TYPE_ALL:
+				configuration += 4+"\\c";
+				break;
+			}
+			
+			if (config.connectionType == NetworkConnectivity.TYPE_WIFI ||config.connectionType == NetworkConnectivity.TYPE_ALL){
+			configuration += (config.publicWiFiAllowed ? "1":"2")+"\\c";
+
+			for (WiFiNetwork network : config.wiFiNetworksDetails) {
+				configuration +=addNetworkDetails(network);
+			}
+			
+			if(config.wiFiNetworksDetails.size()<1)
+				configuration+=" \\c";
+			}
+			
+			else{
+				configuration+=" \\c";
+			}
+			
+			if(config.connectionType == NetworkConnectivity.TYPE_ALL){
+			configuration+=config.preferWiFiOverMobile ? "1":"2";
+			}
+		}
+		
+		return ("CurrentConfig\\c".equalsIgnoreCase(configuration)?configuration+="NoConfig":configuration);
+	}
+	
+	private String addNetworkDetails(WiFiNetwork network){
+		String details = ""+network.getSecurity();
+		details +="*"+network.getSSID().substring(1, network.getSSID().length()-1)+"*";
+		details +=(network.getPassword()!=null ? network.getPassword().substring(1, network.getPassword().length()-1):" ")+";";
+		return details;
+	}
 	public void close() {
 		networkConnectivity.close();
 		

@@ -40,7 +40,7 @@ public class UpdateConfiguration implements Serializable{
 	/**
 	 *  valid network connection types.
 	 */
-	protected int ConnectionType;
+	protected int connectionType;
 	/**
 	 *  use only specific Wi-Fi networks or allow using public Wi-Fi networks.
 	 */

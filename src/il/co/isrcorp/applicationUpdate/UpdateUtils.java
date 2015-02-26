@@ -35,7 +35,7 @@ public class UpdateUtils {
 	 * @param updateConfig
 	 */
 	public static void saveUpdateConfigToFile(String fileName, UpdateConfiguration updateConfig) {
-		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
+		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/SAVE", fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file, false);
 			ObjectOutputStream os;
@@ -57,7 +57,7 @@ public class UpdateUtils {
 	}
 		public static UpdateConfiguration readUpdateConfigFile(String filename) {
 		try{
-		final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
+		final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/SAVE", filename);
 		
 		if (file.exists()) {
 			ObjectInputStream input;
