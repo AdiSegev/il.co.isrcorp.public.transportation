@@ -36,13 +36,14 @@ public class UpdateManager{
 	UpdateConfiguration config;
 	private NetworkConnectivity networkConnectivity;
 	protected boolean downloadStarted = false;
-	
+	protected boolean installationRequested = false;
+	private int apkValidatorCounter = 0;
 
 	public UpdateManager(Context context){
 		mContext = context;
 		UpdateUtils.mContext = mContext;
 		
-		// create SAVE folder for saving apk file
+		// create SAVE folder for saving update configurations details
 		File updateConfigurationFolder =  new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SAVE");
 		
 		if(!updateConfigurationFolder.exists())
@@ -77,12 +78,12 @@ public class UpdateManager{
 			return;
 		
 		// check if we can start downloading and installing new version
-		if (isApkFileExists()){ // in case we already have the apk file, start install process
+		if (isApkFileExists() && isApkFileValid()){ // in case we already have the apk file and it's valid, start install process
 			checkStartingApplicationInstallation();
 		}
-		else if (networkConnectivity.gotValidNetworkConnection()){ // in case we don't have apk file, download it
-			downloadApk();
-		}
+//		else if (networkConnectivity.gotValidNetworkConnection() && !downloadStarted){ // in case we don't have valid apk file, download it
+//			downloadApk();
+//		}
 	}
 	
 	protected void downloadApk() {
@@ -127,6 +128,10 @@ public class UpdateManager{
 			            if (config.apkName.equalsIgnoreCase(files[i].getName())) {
 			            	findFile = true;
 			                
+			            	config.setCrc(files[i].getSize());
+			            	
+			            	UpdateUtils.saveUpdateConfigToFile(UPDATE_CONFIG_FILENAME, config);
+			                
 			                File downloadFile1 = new File(mContext.getExternalFilesDir(null)+"/SAVE",files[i].getName());
 			                
 			                FileOutputStream fileOutput = new FileOutputStream(downloadFile1);
@@ -134,10 +139,14 @@ public class UpdateManager{
 			    
 			    	        byte[] buffer = new byte[1024];
 			    	        int bufferLength = 0;
-			    
+			    try{
 			    	        while ( (bufferLength = inputStream.read(buffer)) > 0 ) {
 			    	            fileOutput.write(buffer, 0, bufferLength);
 			    	        }
+			    }catch(SocketException socketException){
+			    	socketException.printStackTrace();
+			    	
+			    }
 			    	        fileOutput.close();  
 			            }
 			        }
@@ -161,16 +170,28 @@ public class UpdateManager{
 			  if (res instanceof Boolean){
 				 if((Boolean)res){
 					 downloadStarted = false;
-					 new Thread(new Runnable() {
-
-							public void run() {
-								Looper.prepare();
-								 Toast.makeText(mContext, "download success", Toast.LENGTH_SHORT).show();
-								Looper.loop();
-							}
-						}).start();
+					 UpdateUtils.logger("download success");
+//					 new Thread(new Runnable() {
+//
+//							public void run() {
+//								Looper.prepare();
+//								 Toast.makeText(mContext, "download success", Toast.LENGTH_SHORT).show();
+//								Looper.loop();
+//							}
+//						}).start();
+					 // ensure we have valid apk before trying to install it
+					 while(apkValidatorCounter < 5){
+						 apkValidatorCounter++;
+						 
+						 if(isApkFileValid()){
+							 checkStartingApplicationInstallation();
+							 break;
+							 }
+							 else{
+								 downloadApk();
+							 }	 
+					 }
 					 
-					 checkStartingApplicationInstallation();
 				 }
 			  }
 		  } 
@@ -185,11 +206,61 @@ public class UpdateManager{
 		return file.exists();
 	}
 
+	/** This method checks if the existing apk file is the apk stored in the server.<br>
+	 *  We're doing it by comparing the CRC32 checksum sent when update required command received
+	 *  
+	 * @return true if it's valid apk false if not.
+	 */
+	protected boolean isApkFileValid() {
+		File file = new File(mContext.getExternalFilesDir(null)+"/SAVE",config.apkName);
+		if(file.length() != config.getCrc())
+			return false;
+		
+		return true;
+//		BufferedReader in;
+//		try {
+//			in = new BufferedReader(new FileReader(file));
+//			String result = "";
+//			String inputDataLine ="";
+//			
+//			while((inputDataLine = in.readLine())!= null){
+//				result = inputDataLine;
+//			}
+//			
+//			in.close();
+//			CRC32 crc = new CRC32();
+//			
+//			crc.update(result.getBytes(), 0, result.getBytes().length);
+//			
+//			if(config.getCrc() == crc.getValue()){
+//				return true;
+//			}
+//			else{
+//				return false;
+//			}
+//			
+//			
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			return false;
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			return false;
+//		}
+		
+		
+	}
 	/**
 	 * This method check if user wants to install new version, and handle application's installation process.
 	 */
 	private void checkStartingApplicationInstallation() {
 		
+		if(installationRequested)
+			return;
+		
+		installationRequested = true;
 		 
 		new AlertDialog.Builder(mContext) 
 		    .setTitle(mContext.getApplicationInfo().labelRes)
@@ -405,30 +476,43 @@ public class UpdateManager{
 			return;
 		
 		config.updateRequired = true;
+		installationRequested = false;
+		downloadStarted = false;
+		apkValidatorCounter = 0;
+		
 		UpdateUtils.saveUpdateConfigToFile(UPDATE_CONFIG_FILENAME, config);
 		
+		 File sourcefile =new File(mContext.getExternalFilesDir(null)+"/SAVE",config.apkName);
+		 
+		 if(sourcefile.exists())
+			 sourcefile.delete();
+		 
 		// check if we suppose to use only WiFi. 
 		if(config.connectionType == NetworkConnectivity.TYPE_WIFI || (config.connectionType == NetworkConnectivity.TYPE_ALL && config.preferWiFiOverMobile)){
 			
-			if(networkConnectivity.isWiFiEnabled() && networkConnectivity.connectToVaildNetwork()){
+			// enable WiFi if it's disabled
+			if(!networkConnectivity.isWiFiEnabled()){
+				networkConnectivity.enableWiFi();
+				return;
+			} 
+			// if WiFi enabled, try to connect to WiFi network  
+			else if(networkConnectivity.connectToVaildNetwork()  && !downloadStarted){
 			downloadApk();
 			return;
 			}
-		} else if(networkConnectivity.getNetworkConnection()!= null){
+		} 
+		// If we shouldn't use WiFi, we need to ensure disable WiFi
+		else if(networkConnectivity.isWiFiEnabled()){
+			networkConnectivity.diableWiFi();
+		}
+		// If we've got the valid connection type we can start downloading
+		else if(networkConnectivity.getNetworkConnection()!= null && networkConnectivity.gotValidNetworkConnection() && !downloadStarted){
 			downloadApk();
 		}
 		
 		
 	}
 
-	public void wifiNetworkAvailable() {
-		
-		// check if we need to updater current version
-		if (config != null && config.updateRequired && !isApkFileExists()){ // in case we don't have apk file, download it
-			downloadApk();
-		}
-		
-	}
 
 	/** This method returns the current update configurations.<br>
 	 *  
@@ -468,11 +552,11 @@ public class UpdateManager{
 			}
 			
 			if(config.wiFiNetworksDetails.size()<1)
-				configuration+=" \\c";
+				configuration+="\\c";
 			}
 			
 			else{
-				configuration+=" \\c";
+				configuration+="\\c\\c";
 			}
 			
 			if(config.connectionType == NetworkConnectivity.TYPE_ALL){

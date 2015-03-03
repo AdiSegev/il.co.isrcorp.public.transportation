@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.widget.Toast;
@@ -126,11 +127,13 @@ public class NetworkConnectivity {
 	}
 	
 	protected boolean isWiFiEnabled(){
-		if(wifi.getWifiState()==WifiManager.WIFI_STATE_DISABLED || wifi.getWifiState()==WifiManager.WIFI_STATE_DISABLING){
-		wifi.setWifiEnabled(true);
-		return false;
-		}
-		return true;
+		return wifi.getWifiState()==WifiManager.WIFI_STATE_ENABLED;
+	}
+	
+
+	public void diableWiFi() {
+			wifi.setWifiEnabled(false);
+		
 	}
 	/** This method initialize {@link NetworkConnectivity#config} with new updater config.<br>
 	 * 	Then we register no WiFi if needed
@@ -144,7 +147,7 @@ public class NetworkConnectivity {
 					saveKnownNetworks();
 				}
 				
-				registerWiFiReceiver();
+//				registerWiFiReceiver();
 	}
 	
 	protected NetworkInfo getNetworkConnection(){
@@ -172,43 +175,55 @@ public class NetworkConnectivity {
 		  if (config == null || !config.updateRequired )
 			  return;
 		  
+		  UpdateUtils.logger("wifi state = :"+wifi.getWifiState());
+		  
 		  switch (wifi.getWifiState()){
 		  
 		  case WifiManager.WIFI_STATE_DISABLED:
 		  case WifiManager.WIFI_STATE_DISABLING:
+			  
+			  // if we already have the apk file, we don't need to get it from ftp
+				if(updateManager.isApkFileExists()&& updateManager.isApkFileValid())
+					return;
+				
 			  // if we want to use WiFi and we need to update to new version, turn WiFi on
-			  if(config.connectionType == TYPE_WIFI || (config.connectionType == TYPE_ALL  && config.preferWiFiOverMobile))
+			  if(config.connectionType == TYPE_WIFI || (config.connectionType == TYPE_ALL  && config.preferWiFiOverMobile)){
 			  wifi.setWifiEnabled(true);
+			  } else{
+				  // If we shouldn't use WiFi, we'll ensure we have the valid connection type and start downloading
+				  if((!updateManager.isApkFileExists() ||!updateManager.isApkFileValid()) && !updateManager.downloadStarted && netInfo != null && gotValidNetworkConnection())
+				  updateManager.downloadApk();
+			  }
+			  
 			  break;
 		  case WifiManager.WIFI_STATE_ENABLED:
 //			  
 //			  String info = (netInfo == null ? "null":String.valueOf(netInfo.getState()));
 //			  Toast.makeText(context,info , Toast.LENGTH_SHORT).show();
 			  
-			  // if we don't want to use WiFi and we need to update to new version, turn WiFi off
+			  // if we shouldn't use WiFi and we need to update to new version, turn WiFi off
 			  if(((config.connectionType != TYPE_WIFI && !config.preferWiFiOverMobile))){
 			  wifi.setWifiEnabled(false);
 			  return;
 			  }
 			
 			  // if we already have the apk file, we don't need to get it from ftp
-			if(updateManager.isApkFileExists())
+			if(updateManager.isApkFileExists()&& updateManager.isApkFileValid())
 				return;
 			
-			  // Android OS connect automatically to open WiFi network.
-			  // if we're allowed to connect to public networks, we can exit.
+			 
 			  if(config.publicWiFiAllowed){
 				
-				  if (getNetworkConnection() != null && netInfo.isConnected())
+				  if (connectToPublicNetwork() && !updateManager.downloadStarted){
 					  updateManager.downloadApk();
-				  
-				  return;
+				  	  return;
+				  	  }
 			  }
 			  
 			  // If we've got here it means we should connect only to valid WiFi network.
 			  // We need to check if the current connected network is in our allowed networks, if not, we should disconnect from it.
 			  // If we have connected to valid network, start downloading new apk.
-			  if(gotValidNetwork(wifi.getConnectionInfo().getSSID()) && !updateManager.downloadStarted){
+			  if(connectToVaildNetwork() && !updateManager.downloadStarted){
 				  System.out.println("downloading");
 				  updateManager.downloadApk();
 			  }
@@ -260,6 +275,11 @@ public class NetworkConnectivity {
 	 * 
 	 */
 	protected boolean connectToVaildNetwork() {
+		
+		if(config.publicWiFiAllowed){
+			if( connectToPublicNetwork())
+				return true;
+		}
 		List<WifiConfiguration> list = wifi.getConfiguredNetworks();
 		if(list == null)
 			return false;
@@ -277,4 +297,26 @@ public class NetworkConnectivity {
 		     }
 		    return false;
 	}
+
+	private boolean connectToPublicNetwork() {
+		List <ScanResult> results = wifi.getScanResults();
+		
+		for(ScanResult network: results){
+			if(network.capabilities.contains("WPA") || network.capabilities.contains("WPA2") ||network.capabilities.contains("WEP") || "".equalsIgnoreCase(network.SSID))
+				continue;
+			 WifiConfiguration wc = new WifiConfiguration();
+			    wc.SSID = "\""+network.SSID+"\""; //IMPORTANT! This should be in Quotes!!
+			    wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+			    int id = wifi.addNetwork(wc);
+			    wifi.enableNetwork(id, true);
+			    return wifi.reconnect(); 
+			    
+		}
+		return false;
+	}
+
+	public void enableWiFi() {
+		wifi.setWifiEnabled(true);		
+	}
+
 }

@@ -379,8 +379,15 @@ public class MainActivity extends Activity implements Observer{
 					return;
 					}
 					
-					if("UpdateApplication".equalsIgnoreCase(result[1]))
+					if("UpdateApplication".equalsIgnoreCase(result[1])){
 						updater.updateRequiredReceived();
+					return;
+					}
+					
+					if("SendConfig".equalsIgnoreCase(result[1])){
+						messagesToSpmSender.sendCurrentUpdateConfiguration(updater.getUpdateConfiguration());
+					return;
+					}
 					break;
 				
 				case PublicTransportation.SELECTROUTE:

@@ -60,9 +60,21 @@ public class UpdateConfiguration implements Serializable{
 	 * Set to false after user has confirms new version's installation.
 	 */
 	protected boolean updateRequired = false;
+
+	protected long crc;
 	
 	
-	  public static UpdateConfiguration getInstance() {
+	  public long getCrc() {
+		return crc;
+	}
+
+
+	public void setCrc(long crc) {
+		this.crc = crc;
+	}
+
+
+	public static UpdateConfiguration getInstance() {
 	      if(config == null) {
 	    	  config = new UpdateConfiguration();
 	      }

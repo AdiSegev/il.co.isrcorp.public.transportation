@@ -398,5 +398,18 @@ public class MessagesToSpmSender {
 		spmDataPublisher.sendMessage(message.getBytes());
 		
 	}
+
+
+
+	public void sendCurrentUpdateConfiguration(String updateConfiguration) {
+		String message = "";
+		
+		$Zcommands.add(updateConfiguration);
+		
+		message = $Zcmd+updateConfiguration;
+		
+		spmDataPublisher.sendMessage(message.getBytes());
+		
+	}
  
 }
