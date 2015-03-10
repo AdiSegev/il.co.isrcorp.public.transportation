@@ -61,16 +61,16 @@ public class UpdateConfiguration implements Serializable{
 	 */
 	protected boolean updateRequired = false;
 
-	protected long crc;
+	protected long apkFileLength;
 	
 	
-	  public long getCrc() {
-		return crc;
+	  public long getApkFileLength() {
+		return apkFileLength;
 	}
 
 
-	public void setCrc(long crc) {
-		this.crc = crc;
+	public void setApkFileLength(long fileLength) {
+		this.apkFileLength = fileLength;
 	}
 
 

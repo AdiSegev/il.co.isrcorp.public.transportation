@@ -11,7 +11,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.widget.Toast;
 
 /** This class is responsible on managing network connectivity.
  * 
@@ -119,10 +118,11 @@ public class NetworkConnectivity {
 	/**
 	 * 
 	 */
-	private void registerWiFiReceiver() {
+	void registerWiFiReceiver() {
 		// Register for the WiFi changed event
 		final IntentFilter filters = new IntentFilter();
 		filters.addAction("android.net.wifi.STATE_CHANGE");
+		filters.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
 		mContext.registerReceiver(wiFiReceiver, filters);
 	}
 	
@@ -190,8 +190,12 @@ public class NetworkConnectivity {
 			  if(config.connectionType == TYPE_WIFI || (config.connectionType == TYPE_ALL  && config.preferWiFiOverMobile)){
 			  wifi.setWifiEnabled(true);
 			  } else{
+				  
+				  if(updateManager.downloadStarted)
+					  return;
+				  
 				  // If we shouldn't use WiFi, we'll ensure we have the valid connection type and start downloading
-				  if((!updateManager.isApkFileExists() ||!updateManager.isApkFileValid()) && !updateManager.downloadStarted && netInfo != null && gotValidNetworkConnection())
+				  if((!updateManager.isApkFileExists() ||!updateManager.isApkFileValid()) && netInfo != null && gotValidNetworkConnection())
 				  updateManager.downloadApk();
 			  }
 			  
@@ -211,26 +215,57 @@ public class NetworkConnectivity {
 			if(updateManager.isApkFileExists()&& updateManager.isApkFileValid())
 				return;
 			
-			 
-			  if(config.publicWiFiAllowed){
+
+			if (intent.getAction().equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
 				
-				  if (connectToPublicNetwork() && !updateManager.downloadStarted){
-					  updateManager.downloadApk();
-				  	  return;
-				  	  }
-			  }
-			  
+				// if we've got this event it means we're already connected to WiFi network.
+
+				if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)){
+		        	UpdateUtils.logger("connected");
+		        	
+		        	 
+					  if(updateManager.downloadStarted)
+						  return;
+					  
+					// we'll verify we're connected to known WiFi network					  
+		        	for (WiFiNetwork network  : config.wiFiNetworksDetails) {
+						if(network.getSSID().equalsIgnoreCase(wifi.getConnectionInfo().getSSID())){
+							 updateManager.downloadApk();
+						  	  return;
+							}
+					}
+		        	
+		        } else { 
+		            // wifi connection was lost 
+		        	UpdateUtils.logger("not connected");
+		        } 
+		    }else{ 
+		    	 
+				  if(updateManager.downloadStarted)
+					  return;
+				  
+			
+//			  if(config.publicWiFiAllowed){
+//				
+//				  if (connectToPublicNetwork() && !updateManager.downloadStarted){
+//					  
+//					  updateManager.downloadApk();
+//				  	  return;
+//				  	  }
+//			  }
+				  connectToVaildNetwork();
 			  // If we've got here it means we should connect only to valid WiFi network.
 			  // We need to check if the current connected network is in our allowed networks, if not, we should disconnect from it.
 			  // If we have connected to valid network, start downloading new apk.
-			  if(connectToVaildNetwork() && !updateManager.downloadStarted){
+			  if(connectToVaildNetwork()){
 				  System.out.println("downloading");
 				  updateManager.downloadApk();
 			  }
 			  else{
-			      if(!connectToVaildNetwork())
-			    	  System.out.println("failed to connect to WiFi");
+			    	  UpdateUtils.logger("failed to connect to WiFi");
+			      
 			  }
+		    }
 			  // send current application version info to server
 		  break;
 		  }
@@ -240,21 +275,6 @@ public class NetworkConnectivity {
 
 
 	};
-	
-	/** This method checks if the current WiFi network is valid
-	 *  
-	 * @param ssid SSID of current connected network
-	 * @return true if it's valid, false if it's invalid network
-	 */
-	private boolean gotValidNetwork(String ssid) {
-		for (WiFiNetwork network  : config.wiFiNetworksDetails) {
-			if(network.getSSID().equalsIgnoreCase(ssid)){
-				Toast.makeText(mContext, "got valid network "+wifi.getConnectionInfo().getSSID(), Toast.LENGTH_SHORT).show();
-				return true;
-				}
-		}
-		return false;
-	}
 
 	/** This method checks if the current network connection is a valid connection type, according to update configurations.
 	 * @return
@@ -287,11 +307,14 @@ public class NetworkConnectivity {
 		    	
 		    	for (WiFiNetwork network  : config.wiFiNetworksDetails) {
 					if(network.getSSID().equalsIgnoreCase(i.SSID)){
-						Toast.makeText(mContext, "got valid network "+wifi.getConnectionInfo().getSSID(), Toast.LENGTH_SHORT).show();
+						UpdateUtils.logger("got valid network "+wifi.getConnectionInfo().getSSID());
 						wifi.enableNetwork(i.networkId, true);
 			        	
 						return wifi.reconnect(); 
 						}
+					else{
+						wifi.disableNetwork(i.networkId);
+					}
 				}
 		                
 		     }
