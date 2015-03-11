@@ -2,9 +2,11 @@ package com.example.publitransportationintegration;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +14,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,6 +39,10 @@ public class SecondActivity extends Activity {
 		}
 		
 		bindService(new Intent("com.example.publitransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+		
+		 // Register mMessageReceiver to receive messages. 
+	 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
+	 	  
 	}
 
 	@Override
@@ -104,7 +112,16 @@ public class SecondActivity extends Activity {
 		}
 	};
 	
-
+	// handler for received Intents for the "my-event" event  
+	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+	  @Override 
+	  public void onReceive(Context context, Intent intent) {
+	    // Extract data included in the Intent 
+	    String [] message = intent.getStringArrayExtra("message");
+	    Log.d("receiver", "Got message in SecondActivity: " + message[0]);
+	  } 
+	}; 
+	
 private class ServiceResponseHanlder extends Handler {
 		
 		@Override
@@ -140,6 +157,10 @@ private class ServiceResponseHanlder extends Handler {
 	protected void onStop() {
 		if (mConnection != null)
 			unbindService(mConnection);
+		
+		// Unregister since the activity is not visible 
+		  LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		  
 		super.onStop();
 	}
 

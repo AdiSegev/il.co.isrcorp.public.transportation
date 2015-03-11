@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.EventsFromSPM;
 import com.example.il.co.isrcorp.spmcommunicationcore.PublicTransportation;
@@ -145,12 +146,12 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		@Override
 		public void handleMessage(Message msg) {
 			mResponseMessenger = msg.replyTo;
+			String data = msg.getData().getString("data");
 			
-			System.out.println("got message from client "+msg.arg1+" "+System.currentTimeMillis());
+			System.out.println("got message from client "+data);
 				}
 		}
 	
-	Message response = new Message();
 	Bundle bundle = new Bundle();
 	@Override
 	public void update(Observable observable, Object data) {
@@ -158,30 +159,28 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		
 		if (data instanceof EventsFromSPM) {
 
+			
 			handleHelloCommand();
 			
 			String[] result = (String[]) ((EventsFromSPM) data).getData();
+			int messageType = ((EventsFromSPM) data).getType();
+			
 			String dataToJavascript;
 		
+//			if(result.length>0)
+//			sendMessage(result);
 			
-			
+//			
 			switch (((EventsFromSPM) data).getType()) {
 			case EventsFromSPM.HELLO:
 				
-				Utils.logger("got hello in update");
 				break;
 			case EventsFromSPM.GPSINFO:
 				break;
 			case EventsFromSPM.SPMCFGINFO :
-				response.what = ((EventsFromSPM) data).getType();
-				bundle.putStringArray("data", result);
-				response.setData(bundle);
-				try {
-					mResponseMessenger.send(response);
-				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
+				sendMessage(messageType, result);
+				
 				break;
 			case EventsFromSPM.POSITIONINFO:
 				break;
@@ -308,6 +307,16 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		
 	}
 	
+	// Send an Intent with an action named "spm-event".  
+	private void sendMessage(int messageType, String [] data) { 
+	  Intent intent = new Intent("spm-event");
+	  // add data 
+	  intent.putExtra("type", messageType);
+	  intent.putExtra("message", data);
+	  LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+	}  
+
+	
 	/**
 	 * This method handles the Hello command.<br>
 	 */
@@ -327,25 +336,14 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		    }
 		 
 		 // If we've lost communication and we connected again, init SPM communication
-		if(spmCommunicationLost){
-			spmCommunicationLost = false;
-			messagesToSpmSender.sendSPMInitCommandsMessage();
-			updateClient(MainActivity.RESTORE_SPM_COMMUNICATION);
-		}
+//		if(spmCommunicationLost){
+//			spmCommunicationLost = false;
+//			messagesToSpmSender.sendSPMInitCommandsMessage();
+//			updateClient(MainActivity.RESTORE_SPM_COMMUNICATION);
+//		}
 	}
 	
 
-	private void updateClient(int what){
-		response.what = what;
-//		bundle.putStringArray("data", result);
-//		response.setData(bundle);
-		try {
-			mResponseMessenger.send(response);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
 		private void handleICResponse(String[] result) {
 			int inputDevice = -1;
@@ -382,7 +380,7 @@ public class SpmParserBrisgeService extends Service implements Observer{
 				  
 				  // notify app that SPM communication lost
 				  System.out.println("SPM COMMUNICATION LOST");
-				  updateClient(MainActivity.LOST_SPM_COMMUNICATION);
+//				  updateClient(MainActivity.LOST_SPM_COMMUNICATION);
 				  
 //				  new Thread(new Runnable() {
 //

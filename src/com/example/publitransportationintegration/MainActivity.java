@@ -1,24 +1,25 @@
 package com.example.publitransportationintegration;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,8 +89,6 @@ public class MainActivity extends Activity{
 	WaitForSpmDialog progress;
 	
 	protected Messenger spmBridgeService;
-	
-	private Messenger spmBridgeResponse = new Messenger(new ServiceResponseHanlder());
 	
 	public static Context getAppContext() {
 		return MainActivity.context;
@@ -168,6 +167,10 @@ public class MainActivity extends Activity{
 	
 		  	}
 		 	bindService(new Intent("com.example.publitransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+		 	
+		 	 // Register mMessageReceiver to receive messages. 
+		 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
+		 	  
 		 	if(messagesManager!= null && messagesManager.messagesList.size()>0){
 				messagesManager.sortMessages();
 				
@@ -275,17 +278,8 @@ public class MainActivity extends Activity{
 			// interact with the service.  
 			spmBridgeService = new Messenger(service);
 			
-			Message welcome = new Message();
-			welcome.replyTo = spmBridgeResponse;
-			welcome.arg1 = 1;
-			try {
-				spmBridgeService.send(welcome);
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
 		}
+
 
 		public void onServiceDisconnected(ComponentName className) {
 			// This is called when the connection with the service has been
@@ -294,35 +288,50 @@ public class MainActivity extends Activity{
 		}
 	};
 
-private class ServiceResponseHanlder extends Handler {
+	// handler for received Intents for the "my-event" event  
+	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+	  @Override 
+	  public void onReceive(Context context, Intent intent) {
+	    // Extract data included in the Intent 
+	    String [] message = intent.getStringArrayExtra("message");
+	    int messageType =  intent.getIntExtra("type",-1);
+	    
+	    
+	    handleSpmCommand(messageType,message);
+	  } 
+	}; 
+
+	/**
+	 * @param message 
+	 * 
+	 */
+	private void sendToSpm(String message) {
+		Message welcome = new Message();
+		Bundle b =new Bundle();
+		b.putString("data", message);
 		
-		@Override
-		public void handleMessage(Message msg) {
-			int i = 5;
-			switch (msg.what){
-			case LOST_SPM_COMMUNICATION:
-				 progress = new WaitForSpmDialog(MainActivity.this);
-//			     
-				 progress.show();
-			break;
-			case RESTORE_SPM_COMMUNICATION:
-				if(progress!= null)
-				progress.cancel();
-			break;
-			}
-//			Fragment fragment = getFragmentManager().findFragmentByTag("frag");
-//			
-//			TextView tv = (TextView)fragment.getView().findViewById(R.id.output);
-//			String text = tv.getText().toString();
-//			
-//			text+= msg.getData().getStringArray("data")[0];
-//			
-//			tv.setText(text);
-			
-//					System.out.println("got message from service "+((EventsFromSPM)msg.getData().getParcelable(("data"))).getType());
-			
-				}
+		welcome.setData(b);
+		try {
+			spmBridgeService.send(welcome);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+	}
+	
+protected void handleSpmCommand(int messageType, String[] message) {
+	Log.d("receiver", "Got message in MainActivity: " + message[0]);
+		
+	}
+
+@Override
+	protected void onStop() {
+	 // Unregister since the activity is not visible 
+	  LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+		super.onStop();
+	}
+
+
 
 	// This method receives data from publisher.
 		// If data is EventsFromSPM instance, it includes 2 fields. 
