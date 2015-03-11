@@ -83,6 +83,9 @@ public class SpmParserBrisgeService extends Service implements Observer{
  		if (spmDataPublisher == null)
  		startCommunication();
  		
+ 		int i = 5;
+ 		i+=10;
+ 		System.out.println("sasa");
 		// We check if there's valuable data at SPMApplicationName field, to ensure we have all data we need to send to server.
 		// In case we don't have all data, we'll get it from SPM later (when we'll get SPM Info from SPM) and send it.
 		if(!"".equalsIgnoreCase(appInfo.getSPMApplicationName())){
