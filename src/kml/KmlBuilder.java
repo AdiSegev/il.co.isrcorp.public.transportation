@@ -1,15 +1,16 @@
 
 package kml;
 
+import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.RouteStop;
+import il.isrcorp.publictransportationintegration.MyUtils;
+
 import java.io.File;
 import java.util.Map.Entry;
 
 import android.util.Log;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
-import com.example.publictransport.isr.routes.RouteStop;
-import com.example.publictransport.isr.routes.CurrentRoutesInfo;
-import com.example.publitransportationintegration.MyUtils;
 
 public class KmlBuilder {
 	CurrentRoutesInfo currentRouteInfo;

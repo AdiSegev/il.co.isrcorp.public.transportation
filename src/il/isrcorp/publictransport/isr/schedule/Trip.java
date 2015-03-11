@@ -1,4 +1,4 @@
-package com.example.publictransport.isr.schedule;
+package il.isrcorp.publictransport.isr.schedule;
 
 import java.io.Serializable;
 import java.util.Calendar;

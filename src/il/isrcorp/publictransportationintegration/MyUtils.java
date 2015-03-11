@@ -1,4 +1,8 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
+
+import il.isrcorp.publictransport.isr.messages.MessagesManager;
+import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -19,9 +23,6 @@ import java.util.Calendar;
 import android.content.Context;
 import android.os.Environment;
 
-import com.example.publictransport.isr.messages.MessagesManager;
-import com.example.publictransport.isr.routes.CurrentRoutesInfo;
-import com.example.publictransport.isr.schedule.ScheduleManager;
 
 public class MyUtils {
 	transient  static Context context;

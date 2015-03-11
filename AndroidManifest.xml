@@ -16,7 +16,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.publitransportationintegration.MainActivity"
+            android:name="il.isrcorp.publictransportationintegration.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,21 +26,21 @@
         </activity>
         <activity android:name="com.example.il.co.isrcorp.spmcommunicationcore.SerialPortPreferences" >
         </activity>
-        <activity android:name="com.example.publitransportationintegration.WaitForSpmDialog" >
+        <activity android:name="il.isrcorp.publictransportationintegration.WaitForSpmDialog" >
         </activity>
 
         <service
-            android:name="com.example.publitransportationintegration.SpmParserBrisgeService"
+            android:name="il.isrcorp.publictransportationintegration.SpmParserBrisgeService"
             android:enabled="true"
             android:exported="true"
            >
             <intent-filter>
-                <action android:name="com.example.publitransportationintegration.SpmParserBrisgeService" />
+                <action android:name="il.isrcorp.publictransportationintegration.SpmParserBrisgeService" />
             </intent-filter>
         </service>
 
         <activity
-            android:name="com.example.publitransportationintegration.SecondActivity"
+            android:name="il.isrcorp.publictransportationintegration.SecondActivity"
             android:label="@string/title_activity_second" >
         </activity>
     </application>

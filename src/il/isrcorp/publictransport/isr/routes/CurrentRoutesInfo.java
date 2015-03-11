@@ -1,4 +1,6 @@
-package com.example.publictransport.isr.routes;
+package il.isrcorp.publictransport.isr.routes;
+
+import il.isrcorp.publictransportationintegration.MyUtils;
 
 import java.io.Serializable;
 import java.util.Calendar;
@@ -8,7 +10,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
-import com.example.publitransportationintegration.MyUtils;
 
 /** This class stores info about current route. 
  * 

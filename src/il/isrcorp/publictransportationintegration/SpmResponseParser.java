@@ -1,4 +1,11 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
+
+import il.isrcorp.publictransport.isr.messages.Message;
+import il.isrcorp.publictransport.isr.messages.MessagesManager;
+import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.RouteStop;
+import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
+import il.isrcorp.publictransport.isr.schedule.Trip;
 
 import java.io.File;
 
@@ -8,12 +15,6 @@ import android.os.Environment;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.BCTEnums.PreChecksTypes;
 import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
-import com.example.publictransport.isr.messages.Message;
-import com.example.publictransport.isr.messages.MessagesManager;
-import com.example.publictransport.isr.routes.RouteStop;
-import com.example.publictransport.isr.routes.CurrentRoutesInfo;
-import com.example.publictransport.isr.schedule.ScheduleManager;
-import com.example.publictransport.isr.schedule.Trip;
 
 /**	This class is responsible on parsing and handling data came from SPM. 
  * 

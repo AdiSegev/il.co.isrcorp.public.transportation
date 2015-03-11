@@ -1,5 +1,7 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
 
+
+import com.example.publitransportationintegration.R;
 
 import android.app.ProgressDialog;
 import android.content.Context;

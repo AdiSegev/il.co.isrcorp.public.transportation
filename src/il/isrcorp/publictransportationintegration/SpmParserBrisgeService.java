@@ -1,4 +1,6 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
+
+import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -13,14 +15,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.EventsFromSPM;
 import com.example.il.co.isrcorp.spmcommunicationcore.PublicTransportation;
 import com.example.il.co.isrcorp.spmcommunicationcore.SpmDataPublisher;
-import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
-import com.example.publictransport.isr.routes.CurrentRoutesInfo;
 
 public class SpmParserBrisgeService extends Service implements Observer{
 	
@@ -83,9 +82,6 @@ public class SpmParserBrisgeService extends Service implements Observer{
  		if (spmDataPublisher == null)
  		startCommunication();
  		
- 		int i = 5;
- 		i+=10;
- 		System.out.println("sasa");
 		// We check if there's valuable data at SPMApplicationName field, to ensure we have all data we need to send to server.
 		// In case we don't have all data, we'll get it from SPM later (when we'll get SPM Info from SPM) and send it.
 		if(!"".equalsIgnoreCase(appInfo.getSPMApplicationName())){

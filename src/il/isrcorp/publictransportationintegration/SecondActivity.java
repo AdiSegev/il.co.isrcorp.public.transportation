@@ -1,4 +1,6 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
+
+import com.example.publitransportationintegration.R;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -38,7 +40,7 @@ public class SecondActivity extends Activity {
 					.add(R.id.container, new PlaceholderFragment()).commit();
 		}
 		
-		bindService(new Intent("com.example.publitransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+		bindService(new Intent("il.isrcorp.publictransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
 		
 		 // Register mMessageReceiver to receive messages. 
 	 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));

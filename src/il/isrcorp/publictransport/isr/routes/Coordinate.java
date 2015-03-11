@@ -1,4 +1,4 @@
-package com.example.publictransport.isr.routes;
+package il.isrcorp.publictransport.isr.routes;
 
 /** This class represent single coordinate in the route
  * 

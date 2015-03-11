@@ -1,4 +1,4 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
 
 import java.io.Serializable;
 import java.text.DateFormat;

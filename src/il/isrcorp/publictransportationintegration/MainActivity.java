@@ -1,4 +1,9 @@
-package com.example.publitransportationintegration;
+package il.isrcorp.publictransportationintegration;
+
+import il.isrcorp.publictransport.isr.messages.MessagesManager;
+import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.RouteStop;
+import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,10 +31,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.SerialPortPreferences;
-import com.example.publictransport.isr.messages.MessagesManager;
-import com.example.publictransport.isr.routes.CurrentRoutesInfo;
-import com.example.publictransport.isr.routes.RouteStop;
-import com.example.publictransport.isr.schedule.ScheduleManager;
+import com.example.publitransportationintegration.R;
 
 public class MainActivity extends Activity{
 
@@ -166,7 +168,7 @@ public class MainActivity extends Activity{
 		   
 	
 		  	}
-		 	bindService(new Intent("com.example.publitransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+		 	bindService(new Intent("il.isrcorp.publictransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
 		 	
 		 	 // Register mMessageReceiver to receive messages. 
 		 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));

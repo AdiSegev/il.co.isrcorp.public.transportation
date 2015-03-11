@@ -1,4 +1,4 @@
-package com.example.publictransport.isr.messages;
+package il.isrcorp.publictransport.isr.messages;
 
 import java.io.Serializable;
 import java.util.Comparator;
