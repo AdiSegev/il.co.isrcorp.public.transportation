@@ -162,12 +162,13 @@ public class MyUtils {
 	}
 	
 	public static void saveAppInfoToFile(String fileName, ApplicationInfo appInfo) {
-		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
+		File file = new File(context.getFilesDir(), fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file, false);
 			ObjectOutputStream os;
 			os = new ObjectOutputStream(fos);
 			os.writeObject(appInfo);
+			fos.flush();
 			fos.close();
 			os.close();
 			
@@ -184,7 +185,7 @@ public class MyUtils {
 	}
 		public static ApplicationInfo readAppInfoFile(String filename) {
 		try{
-		final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
+		final File file = new File(context.getFilesDir(), filename);
 		
 		if (file.exists()) {
 			ObjectInputStream input;
