@@ -1,6 +1,6 @@
 package il.isrcorp.publictransportationintegration;
 
-import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.CurrentRouteInfo;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -49,9 +49,8 @@ public class SpmParserBrisgeService extends Service implements Observer{
 	
 	private Messenger msg = new Messenger(new ClientRequestHanlder());
 	
-	Messenger mResponseMessenger = null;
 
-	private CurrentRoutesInfo currentRouteInfo;
+	private CurrentRouteInfo currentRouteInfo;
 	
 	/**
 	 * Used to notify we lost communication with SPM.
@@ -73,7 +72,7 @@ public class SpmParserBrisgeService extends Service implements Observer{
 	@Override
 	public void onCreate() {
 		appInfo = ApplicationInfo.getInstance();
-		currentRouteInfo = CurrentRoutesInfo.getInstance();
+		currentRouteInfo = CurrentRouteInfo.getInstance();
 		MyUtils.context = this;
 		
  		// We need to check if app temporarily went to background (not during startNavigation) or starting for the first time.
@@ -140,11 +139,10 @@ public class SpmParserBrisgeService extends Service implements Observer{
 		
 		
 	}
-	private class ClientRequestHanlder extends Handler {
+	private static class ClientRequestHanlder extends Handler {
 		
 		@Override
 		public void handleMessage(Message msg) {
-			mResponseMessenger = msg.replyTo;
 			String data = msg.getData().getString("data");
 			
 			System.out.println("got message from client "+data);

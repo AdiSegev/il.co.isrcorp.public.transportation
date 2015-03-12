@@ -1,10 +1,11 @@
 package il.isrcorp.publictransportationintegration;
 
 import il.isrcorp.publictransport.isr.messages.MessagesManager;
-import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.CurrentRouteInfo;
 import il.isrcorp.publictransport.isr.routes.RouteStop;
 import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
 import android.app.Activity;
@@ -17,6 +18,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -67,7 +69,7 @@ public class MainActivity extends Activity{
 	/**
 	 * Contains details of the current route including list of all route's stops.
 	 */
-	private CurrentRoutesInfo currentRouteInfo;
+	private CurrentRouteInfo currentRouteInfo;
 
 	/**
 	 * Represent messages manager
@@ -103,11 +105,22 @@ public class MainActivity extends Activity{
 
 		MyUtils.context = this;
 		
+	
+		
 		if (savedInstanceState == null) {
 			getFragmentManager().beginTransaction()
 					.add(R.id.container, new PlaceholderFragment(),"frag").commit();
 		}
 
+		
+		// create SAVE folder for saving update configurations details
+				File updateConfigurationFolder =  new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SAVE_PACKAGE");
+				
+				if(!updateConfigurationFolder.exists())
+					updateConfigurationFolder.mkdir();
+				
+				MyUtils.saveFileToExternalSdCard("PackageName", getApplicationInfo().packageName);
+				
 		// read global info of application, Including DbId, and full checks list
 		appInfo = (MyUtils.readAppInfoFile(APP_INFO_FILE));  
 		
@@ -134,7 +147,7 @@ public class MainActivity extends Activity{
 		// if we don't have route info, create new.
 		if (currentRouteInfo == null){
 			
-			currentRouteInfo	 = CurrentRoutesInfo.getInstance();
+			currentRouteInfo	 = CurrentRouteInfo.getInstance();
 				
 		}
 		else{
@@ -143,15 +156,15 @@ public class MainActivity extends Activity{
 				currentRouteInfo.routeStopsList = new ConcurrentHashMap<Integer, RouteStop>();
 			}
 			
-			CurrentRoutesInfo.currentRouteInfoInstance = currentRouteInfo;
+			CurrentRouteInfo.currentRouteInfoInstance = currentRouteInfo;
 			
 		}
 		
-		// read global info of application, Including DbId, and full checks list
+		// read saved messages list
 		messagesManager = (MyUtils.readMessagesManagerFile(MESSAGES_MANAGER));  
 				
-				if(appInfo == null){
-					appInfo = ApplicationInfo.getInstance();
+				if(messagesManager == null){
+					messagesManager = MessagesManager.getInstance();
 				}
 				else{
 					MessagesManager.messagesManagerInstance = messagesManager;
@@ -173,18 +186,18 @@ public class MainActivity extends Activity{
 		 	 // Register mMessageReceiver to receive messages. 
 		 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
 		 	  
-		 	if(messagesManager!= null && messagesManager.messagesList.size()>0){
-				messagesManager.sortMessages();
-				
-				Fragment fragment = getFragmentManager().findFragmentByTag("frag");
-				
-				TextView tv = (TextView)fragment.getView().findViewById(R.id.output);
-				String text = "";
-				for (int i = 0;i<messagesManager.messagesList.size();i++){
-					text+=messagesManager.messagesList.get(i).getText()+"\n";
-				}
-						tv.setText(text); 
-						}
+//		 	if(messagesManager!= null && messagesManager.messagesList.size()>0){
+//				messagesManager.sortMessages();
+//				
+//				Fragment fragment = getFragmentManager().findFragmentByTag("frag");
+//				
+//				TextView tv = (TextView)fragment.getView().findViewById(R.id.output);
+//				String text = "";
+//				for (int i = 0;i<messagesManager.messagesList.size();i++){
+//					text+=messagesManager.messagesList.get(i).getText()+"\n";
+//				}
+//						tv.setText(text); 
+//						}
 	       super.onResume();
 	}
 	
@@ -328,6 +341,9 @@ protected void handleSpmCommand(int messageType, String[] message) {
 
 @Override
 	protected void onStop() {
+	if (mConnection != null)
+		unbindService(mConnection);
+	
 	 // Unregister since the activity is not visible 
 	  LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 		super.onStop();

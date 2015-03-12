@@ -16,7 +16,7 @@ import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
  * @author Adi
  *
  */
-public class CurrentRoutesInfo implements Serializable{
+public class CurrentRouteInfo implements Serializable{
 
 	/**
 	 * 
@@ -56,7 +56,7 @@ transient ValueComparator bvc;
 
 transient TreeMap<Integer, RouteStop> sorted_map;
 
-public static CurrentRoutesInfo currentRouteInfoInstance = null;
+public static CurrentRouteInfo currentRouteInfoInstance = null;
 
 
 	public String destination;
@@ -127,12 +127,12 @@ public static CurrentRoutesInfo currentRouteInfoInstance = null;
 	}
 
 	 
-	protected CurrentRoutesInfo(){
+	protected CurrentRouteInfo(){
 	}
 	
-	  public static CurrentRoutesInfo getInstance() {
+	  public static CurrentRouteInfo getInstance() {
 	      if(currentRouteInfoInstance == null) {
-	    	  currentRouteInfoInstance = new CurrentRoutesInfo();
+	    	  currentRouteInfoInstance = new CurrentRouteInfo();
 	      }
 	      return currentRouteInfoInstance;
 	   }

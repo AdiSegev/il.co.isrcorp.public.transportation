@@ -1,7 +1,7 @@
 
 package kml;
 
-import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.CurrentRouteInfo;
 import il.isrcorp.publictransport.isr.routes.RouteStop;
 import il.isrcorp.publictransportationintegration.MyUtils;
 
@@ -13,10 +13,10 @@ import android.util.Log;
 import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
 
 public class KmlBuilder {
-	CurrentRoutesInfo currentRouteInfo;
+	CurrentRouteInfo currentRouteInfo;
 	
 	public KmlBuilder(){
-		currentRouteInfo = CurrentRoutesInfo.getInstance();
+		currentRouteInfo = CurrentRouteInfo.getInstance();
 	}
 
 	/**

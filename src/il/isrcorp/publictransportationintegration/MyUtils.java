@@ -1,7 +1,7 @@
 package il.isrcorp.publictransportationintegration;
 
 import il.isrcorp.publictransport.isr.messages.MessagesManager;
-import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.CurrentRouteInfo;
 import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
 
 import java.io.BufferedReader;
@@ -21,6 +21,7 @@ import java.nio.CharBuffer;
 import java.util.Calendar;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Environment;
 
 
@@ -49,6 +50,57 @@ public class MyUtils {
 
 	}
 
+	public static void saveFileToExternalSdCard(String filename, String packageName) {
+		Bundle b = new Bundle();
+		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/SAVE_PACKAGE", filename);
+		try {
+			FileOutputStream fos = new FileOutputStream(file, false);
+			fos.write(packageName.getBytes());
+			fos.flush();
+			fos.close();
+			
+		} catch (NullPointerException npe){
+			System.out.println("got null in save");
+		}
+		catch (FileNotFoundException e) {
+			System.out.println("didnt write to file");
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	public static int readFileFromExternalSdCard(String filename, byte [] dest) {
+		try{
+		final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/Package", filename);
+		
+		if (file.exists()) {
+			
+			InputStream input = new FileInputStream(file);
+			try {
+				int byteCnt = input.read(dest);
+				input.close();
+				return byteCnt; // true;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			}
+			}
+			catch (NullPointerException npe){
+				System.out.println("got null in read");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+
+			} catch (IOException e) {
+				
+				e.printStackTrace();
+			}
+
+		return -1;
+	}
+	
 	public static int readFile(String filename, byte[] dest) {
 
 		final File file = new File(context.getExternalFilesDir(null), filename);
@@ -110,7 +162,7 @@ public class MyUtils {
 	}
 	
 	public static void saveAppInfoToFile(String fileName, ApplicationInfo appInfo) {
-		File file = new File(context.getExternalFilesDir(null), fileName);
+		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file, false);
 			ObjectOutputStream os;
@@ -132,7 +184,7 @@ public class MyUtils {
 	}
 		public static ApplicationInfo readAppInfoFile(String filename) {
 		try{
-		final File file = new File(context.getExternalFilesDir(null), filename);
+		final File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), filename);
 		
 		if (file.exists()) {
 			ObjectInputStream input;
@@ -289,7 +341,7 @@ public class MyUtils {
 	}
 
 	public static void saveRouteInfo(String routeInfoFile,
-			CurrentRoutesInfo currentRouteInfo) {
+			CurrentRouteInfo currentRouteInfo) {
 
 		File file = new File(context.getExternalFilesDir(null), routeInfoFile);
 		try {
@@ -311,7 +363,7 @@ public class MyUtils {
 		}
 	}
 
-	public static CurrentRoutesInfo readRouteInfoFile(String filename) {
+	public static CurrentRouteInfo readRouteInfoFile(String filename) {
 		
 		try{
 		final File file = new File(context.getExternalFilesDir(null), filename);
@@ -320,7 +372,7 @@ public class MyUtils {
 			
 			ObjectInputStream input;
 				input = new ObjectInputStream(new FileInputStream(file));
-				CurrentRoutesInfo currentRouteInfo = (CurrentRoutesInfo) input
+				CurrentRouteInfo currentRouteInfo = (CurrentRouteInfo) input
 						.readObject();
 				input.close();
 				return currentRouteInfo;

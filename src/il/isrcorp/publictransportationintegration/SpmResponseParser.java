@@ -2,7 +2,7 @@ package il.isrcorp.publictransportationintegration;
 
 import il.isrcorp.publictransport.isr.messages.Message;
 import il.isrcorp.publictransport.isr.messages.MessagesManager;
-import il.isrcorp.publictransport.isr.routes.CurrentRoutesInfo;
+import il.isrcorp.publictransport.isr.routes.CurrentRouteInfo;
 import il.isrcorp.publictransport.isr.routes.RouteStop;
 import il.isrcorp.publictransport.isr.schedule.ScheduleManager;
 import il.isrcorp.publictransport.isr.schedule.Trip;
@@ -35,7 +35,7 @@ public class SpmResponseParser {
 	 */
 	private ApplicationInfo appInfo;
 	
-	public CurrentRoutesInfo currentRouteInfo;
+	public CurrentRouteInfo currentRouteInfo;
 
 	/**
 	 * Represents to manage driver's schedule. 
@@ -57,7 +57,7 @@ public class SpmResponseParser {
 		
 		appInfo = ApplicationInfo.getInstance();
 		scheduleManager = ScheduleManager.getInstance();
-		currentRouteInfo = CurrentRoutesInfo.getInstance();
+		currentRouteInfo = CurrentRouteInfo.getInstance();
 		messagesManager = MessagesManager.getInstance();
 		
 		kmlBuilder = new KmlBuilder();
@@ -65,7 +65,7 @@ public class SpmResponseParser {
 	
 
 	public SpmResponseParser() {
-		currentRouteInfo = CurrentRoutesInfo.getInstance();
+		currentRouteInfo = CurrentRouteInfo.getInstance();
 	}
 
 
@@ -85,12 +85,17 @@ public class SpmResponseParser {
 		
 	    currentRouteInfo.updateRouteStopsETA();
 	    
+	    // request current route in order to check if we need to build kml with route's coordinates
 	    messagesToSpmSender.sendGetCurrentRoute();
 	    
 		}
 		catch (NullPointerException npe){
 			Utils.logger("couldn't get route Stop ");
 			npe.printStackTrace();
+		}
+		catch (ArrayIndexOutOfBoundsException boundsException){
+			Utils.logger("illegal routeSelect command length ");
+			boundsException.printStackTrace();
 		}
 	}
 
@@ -236,6 +241,7 @@ public class SpmResponseParser {
 			exception.printStackTrace();
 			return false;
 		}
+		
 	}
 
 	/** This method checks if we already have KML file for current route.<br>
@@ -468,7 +474,7 @@ public class SpmResponseParser {
 	 */
 	public boolean handleMsgList(String[] messageDetails) {
 
-		// Check if we've received all messages
+		// If messageDetails is 3 it means we've received all messages
 		if(messageDetails.length ==3){
 			// save messages
 			MyUtils.saveMessagesManagerToFile(MainActivity.MESSAGES_MANAGER, messagesManager);
@@ -479,7 +485,7 @@ public class SpmResponseParser {
 		try{
 			int messageId = Integer.valueOf(messageDetails[1]);
 			
-			// if we just getting messages, clean old list
+			// if it's the first message, clean old list
 			if(messageId == 0){
 				messagesManager.messagesList.clear();
 			}
