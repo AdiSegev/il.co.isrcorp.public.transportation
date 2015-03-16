@@ -1,7 +1,10 @@
 package il.isrcorp.publictransport.isr.schedule;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 /** This class represents single trip of complete schedule
  * 
@@ -15,23 +18,32 @@ public class Trip implements Serializable {
 	 */
 	private static final long serialVersionUID = 2487564309559947251L;
 			
-			String uniqueTripNum; 
 			String driverID;
 			String tripName;
-			String tripStartDate;// (TimeDate)
-			String tripEndtDate;// (TimeDate)
+			/**
+			 * Represent trip's start date and time. <br> 
+			 * Saved as Calendar object so we can easily compare if it's before/after current time, using {@link Calendar#before(Object)} and {@link Calendar#after(Object)} functions.<br>
+			 * We can also get specific fields(etc. Hour/Minutes) using (@link {@link Calendar#get(int)} function. 
+			 */
+			Calendar tripStartDate;
+			/**
+			 * Represent trip's end date and time. <br> 
+			 * Saved as Calendar object so we can easily compare if it's before/after current time, using {@link Calendar#before(Object)} and {@link Calendar#after(Object)} functions.<br>
+			 * We can also get specific fields(etc. Hour/Minutes) using (@link {@link Calendar#get(int)} function. 
+			 */
+			Calendar tripEndtDate;
 			String CTP_INT;// – boolean (True = there is CTP in this trip, False – there isn't)
 			String tripID;
 			String MOTRtID;
-			String blockID;
+			String operationArea;
 			String RTEname;
 			String lineSign;
 			String lineAlternate;
 			String direction;
 			String  from;
 			String to;
-			String vehicleID;
 			
+			SimpleDateFormat formater = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.US);
 			
 			public String getDriverID() {
 				return driverID;
@@ -45,12 +57,18 @@ public class Trip implements Serializable {
 			public void setTripName(String tripName) {
 				this.tripName = tripName;
 			}
-			public String getTripStartDate() {
+			public Calendar getTripStartDate() {
 				return tripStartDate;
 			}
 			public void setTripStartDate(String tripStartDate) {
 				
-				this.tripStartDate = tripStartDate.substring(6, 8)+":"+tripStartDate.substring(8, 10)+":"+tripStartDate.substring(10, 12);
+				this.tripStartDate = Calendar.getInstance();
+				try {
+					this.tripStartDate.setTime(formater.parse(tripStartDate));
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			
 			public String getCTP_INT() {
@@ -65,11 +83,11 @@ public class Trip implements Serializable {
 			public void setTripID(String tripID) {
 				this.tripID = tripID;
 			}
-			public String getBlockID() {
-				return blockID;
+			public String getOperationArea() {
+				return operationArea;
 			}
-			public void setBlockID(String blockID) {
-				this.blockID = blockID;
+			public void setOperationArea(String operationArea) {
+				this.operationArea = operationArea;
 			}
 			public String getRTEname() {
 				return RTEname;
@@ -107,23 +125,18 @@ public class Trip implements Serializable {
 			public void setTo(String to) {
 				this.to = to;
 			}
-			public String getVehicleID() {
-				return vehicleID;
-			}
-			public void setVehicleID(String vehicleID) {
-				this.vehicleID = vehicleID;
-			}
-			public String getTripEndtDate() {
+			public Calendar getTripEndtDate() {
 				return tripEndtDate;
 			}
 			public void setTripEndtDate(String tripEndtDate) {
-				this.tripEndtDate = tripEndtDate.substring(6, 8)+":"+tripEndtDate.substring(8, 10)+":"+tripEndtDate.substring(10, 12);
-			}
-			public String getUniqueTripNum() {
-				return uniqueTripNum;
-			}
-			public void setUniqueTripNum(String uniqueTripNum) {
-				this.uniqueTripNum = uniqueTripNum;
+
+				this.tripEndtDate = Calendar.getInstance();
+				try {
+					this.tripEndtDate.setTime(formater.parse(tripEndtDate));
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			public String getMOTRtID() {
 				return MOTRtID;

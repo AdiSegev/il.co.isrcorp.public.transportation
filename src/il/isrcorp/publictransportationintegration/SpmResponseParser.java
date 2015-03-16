@@ -11,9 +11,7 @@ import java.io.File;
 
 import kml.KmlBuilder;
 import android.content.Context;
-import android.os.Environment;
 
-import com.example.il.co.isrcorp.spmcommunicationcore.BCTEnums.PreChecksTypes;
 import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
 
 /**	This class is responsible on parsing and handling data came from SPM. 
@@ -100,7 +98,7 @@ public class SpmResponseParser {
 	}
 
 	/** This method gets data for single line of schedule and add it to complete schedule list. <br>
-	 *  It overrides existing item if the RTE name is equals, in case there was some change at the RTE details.<br>
+	 *  It overrides existing item if the trip Id is equals, in case there was some change at the RTE details.<br>
 	 *  If item was added, save app info to file, in order to save existing schedule state.
 	 *      
 	 * @param result data of single schedule item
@@ -108,89 +106,24 @@ public class SpmResponseParser {
 	public void handleDriverScheduleResponse(String[] result) {
 
 		Trip item = new Trip();
-//		String[] splitedArrayItem;
-//
-//		for (String itemInArray : result) {
-//			splitedArrayItem = itemInArray.split("=");
-//
-//			if ("1".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//
-//			if ("2".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("3".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("4".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("5".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("6".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("7".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("8".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("9".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("10".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("11".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("12".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("13".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("14".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//			if ("15".equalsIgnoreCase(splitedArrayItem[0])) {
-//				item.setDriverID(splitedArrayItem[1]);
-//				continue;
-//			}
-//
-//		}
+
+		item.setRTEname(result[2]);
+		item.setLineAlternate(result[3]);
+		item.setOperationArea(result[4]);
+		item.setDirection(result[5]);
+		item.setFrom(result[6]);
+		item.setTo(result[7]);
+		item.setTripID(result[8]);
+		item.setTripStartDate(result[9]);
+		item.setTripEndtDate(result[10]);
+		item.setLineSign(result[13]);
+		
+//		item.setDriverID(result[0]);
+//		item.setTripName(result[1]);
 //		
-		item.setDriverID(result[0]);
-		item.setTripName(result[1]);
-		item.setTripStartDate(result[2]);
-		item.setTripEndtDate(result[3]);
-		item.setCTP_INT(result[4]);
-		item.setTripID(result[5]);
-		item.setBlockID(result[6]);
-		item.setRTEname(result[7]);
-		item.setLineSign(result[8]);
-		item.setLineAlternate(result[9]);
-		item.setDirection(result[10]);
-		item.setFrom(result[11]);
-		item.setTo(result[12]);
-		item.setVehicleID(result[13]);
+//		item.setCTP_INT(result[4]);
+		
+			
 		item.setMOTRtID(result[14]);
 		
 		try{
@@ -376,93 +309,6 @@ public class SpmResponseParser {
 		    file1.delete();
 		  } 
 		}
-	}
-
-
-	/** This method receives and parses Rdte schedule.<br>
-	 * @param fullSchedule
-	 */
-	public void handleRdteScheduleResponse(String[] fullSchedule) {
-		
-		// clear previous schedule
-		scheduleManager.schedule.clear();
-		
-		String [] tripList = fullSchedule[3].replace("*", "~").split("~"); 
-		
-		// check if we got all trips
-		if(Integer.valueOf(fullSchedule[2]) != tripList.length){
-			/////
-			
-			// indicates we didn't get all trips. request schedule again.
-			//messagesToSpmSender.sendGetRdteSchedule();
-			return;
-		}
-		
-		Trip item;
-		String [] tripDetails;
-		
-		// iterate over all trip list and save trips to schedule member 
-		for (String trip : tripList){
-			item = new Trip();
-			try{
-			
-			tripDetails = trip.split(";");
-			
-			item.setUniqueTripNum(tripDetails[0]);
-			item.setDriverID(tripDetails[1]);
-			item.setTripName(tripDetails[2]);
-			item.setTripStartDate(tripDetails[3]);
-			item.setTripEndtDate(tripDetails[4]);
-			item.setCTP_INT(tripDetails[5]);
-			item.setTripID(tripDetails[6]);
-			item.setBlockID(tripDetails[7]);
-			item.setRTEname(tripDetails[8]);
-			item.setLineSign(tripDetails[9]);
-			item.setLineAlternate(tripDetails[10]);
-			item.setDirection(tripDetails[11]);
-			item.setFrom(tripDetails[12]);
-			item.setTo(tripDetails[13]);
-			item.setVehicleID(tripDetails[14]);
-			item.setMOTRtID(tripDetails[15]);
-			
-			// save trip. 
-			scheduleManager.schedule.put(item.getUniqueTripNum(), item);
-			}
-			catch (ArrayIndexOutOfBoundsException outOfBoundsException){
-				Utils.logger("failed to add trip "+item.getUniqueTripNum());
-				outOfBoundsException.printStackTrace();
-			}
-		}
-		
-	}
-
-
-	/** This method deletes schedule items from {@link ScheduleManager#schedule}.<br>
-	 *  
-	 * @param scheduleDeleteCommand contains details about requested schedule items to delete
-	 */
-	public void handleRdteDeleteScheduleResponse(String[] scheduleDeleteCommand) {
-		
-		String [] scheduleItems = scheduleDeleteCommand[2].split("*");
-		
-		// if we didn't get any items, it indicates we should delete all previous trips from schedule 
-		if(scheduleItems.length == 1 ){
-			scheduleManager.schedule.clear();
-			return;
-		}
-		
-		// iterate over the list and remove requested trips
-		for(String tripId : scheduleItems){
-			try{
-			scheduleManager.schedule.remove(tripId);
-			}
-			catch (Exception exception){
-				Utils.logger("failed to remove schedule item "+tripId );
-				exception.printStackTrace();
-			}
-		}
-				
-		
 	}
 
 

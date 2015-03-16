@@ -13,6 +13,8 @@ import com.example.il.co.isrcorp.spmcommunicationcore.SpmDataPublisher;
  */
 public class MessagesToSpmSender {
 
+	public static MessagesToSpmSender messagesToSpmSender = null;
+	
 	/**
 	 * Used to send message to SPM.
 	 */
@@ -93,10 +95,17 @@ public class MessagesToSpmSender {
      */
     String $Zcmd = "$Z,";
     
-	public MessagesToSpmSender(SpmDataPublisher spmDataPublisher) {
-		this.spmDataPublisher = spmDataPublisher;
+	public MessagesToSpmSender() {
 	}
 	
+	public static MessagesToSpmSender getInstance(){
+		if(messagesToSpmSender == null){
+			return new MessagesToSpmSender();
+		}
+		else{
+			return messagesToSpmSender;
+		}
+	}
 	
 	
 	/**	This method constructs and send login request using xml-pt

@@ -129,7 +129,8 @@ public class SpmParserBrisgeService extends Service implements Observer{
 	    
 		spmDataPublisher.startCommunication();
 		
-		messagesToSpmSender = new MessagesToSpmSender(spmDataPublisher);
+		messagesToSpmSender = MessagesToSpmSender.getInstance();
+		messagesToSpmSender.spmDataPublisher = spmDataPublisher;
 		
 		spmParser = new SpmResponseParser(this, messagesToSpmSender);
 		
@@ -231,6 +232,14 @@ public class SpmParserBrisgeService extends Service implements Observer{
 				break;
 			case PublicTransportation.$APP:
 				messagesToSpmSender.send$App();
+				
+				if ("SDATA".equalsIgnoreCase(result[0])){
+					// save trip only if is not cancelled 
+					if("0".equalsIgnoreCase(result[12]))
+					spmParser.handleDriverScheduleResponse(result);
+					return;
+				}
+				
 				break;
 			
 			case PublicTransportation.SELECTROUTE:
@@ -275,7 +284,6 @@ public class SpmParserBrisgeService extends Service implements Observer{
 				
 			break;
 			case PublicTransportation.APPROACHSTOP:
-				messagesToSpmSender.send$App();
 			break;
 			case PublicTransportation.EXITSTOP:
 			break;
@@ -292,10 +300,6 @@ public class SpmParserBrisgeService extends Service implements Observer{
 			break;
 			case PublicTransportation.STOPLATLON:
 				currentRouteInfo.setRouteStopLocation(result);
-			break;
-			case PublicTransportation.DRIVER_SCHEDULE:
-				messagesToSpmSender.send$App();
-				spmParser.handleDriverScheduleResponse(result);
 			break;
 			
 			}

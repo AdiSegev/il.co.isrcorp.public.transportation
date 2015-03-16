@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.il.co.isrcorp.spmcommunicationcore.SerialPortPreferences;
+import com.example.il.co.isrcorp.spmcommunicationcore.Utils;
 import com.example.publitransportationintegration.R;
 
 public class MainActivity extends Activity{
@@ -47,6 +48,7 @@ public class MainActivity extends Activity{
 	
 	
 	private static Context context;
+	private MessagesToSpmSender messagesToSpmSender;
 //	/**
 //	 * Used to enable receiving messages from publisher.
 //	 */
@@ -179,13 +181,14 @@ public class MainActivity extends Activity{
 			// we also check if driver started navigation. If he is, we don't need to send general info and shouldn't launch html again, as it already being shown.  
 		 	if(isSerialPortConfigured()){
 		   
-	
+		 		bindService(new Intent("il.isrcorp.publictransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+			 	
+			 	 // Register mMessageReceiver to receive messages. 
+			 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
+			 	  
+			 	  
 		  	}
-		 	bindService(new Intent("il.isrcorp.publictransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
-		 	
-		 	 // Register mMessageReceiver to receive messages. 
-		 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
-		 	  
+		 
 //		 	if(messagesManager!= null && messagesManager.messagesList.size()>0){
 //				messagesManager.sortMessages();
 //				
@@ -262,6 +265,23 @@ public class MainActivity extends Activity{
 	}
 	
 	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		
+		if (resultCode ==Activity.RESULT_OK){
+			bindService(new Intent("il.isrcorp.publictransportationintegration.SpmParserBrisgeService"), mConnection, Context.BIND_AUTO_CREATE);
+		 	
+		 	 // Register mMessageReceiver to receive messages. 
+		 	  LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("spm-event"));
+		}
+		else {
+			Utils.logger("got wrong rsult "+ resultCode);
+		}
+	}
+
+
 	/**
 	 * A placeholder fragment containing a simple view.
 	 */
@@ -292,6 +312,8 @@ public class MainActivity extends Activity{
 			// established, giving us the service object we can use to
 			// interact with the service.  
 			spmBridgeService = new Messenger(service);
+			messagesToSpmSender = MessagesToSpmSender.getInstance();
+			
 			
 		}
 
@@ -341,8 +363,15 @@ protected void handleSpmCommand(int messageType, String[] message) {
 
 @Override
 	protected void onStop() {
-	if (mConnection != null)
+	
+	if (mConnection != null){
+	try{
 		unbindService(mConnection);
+	}
+	catch (IllegalArgumentException argumentException){
+		argumentException.printStackTrace();
+	}
+	}
 	
 	 // Unregister since the activity is not visible 
 	  LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);

@@ -50,7 +50,12 @@ public class CurrentRouteInfo implements Serializable{
 	
 	String routeNum = "";
 	
-String direction = "";
+	String direction = "";
+	
+	String subDivision = "";
+
+	String operationArea = "";
+	
 
 transient ValueComparator bvc;
 
@@ -63,12 +68,30 @@ public static CurrentRouteInfo currentRouteInfoInstance = null;
 
 	private StringBuffer value;
 	
+
+	public String getSubDivision() {
+		return subDivision;
+	}
+
+	public void setSubDivision(String fullRte) {
+		this.subDivision = fullRte.substring(3, 4);
+	}
+
+	public String getOperationArea() {
+		return operationArea;
+	}
+
+	public void setOperationArea(String fullRte) {
+		this.operationArea =fullRte.substring(6, 8);
+	}
+
+	
 	public String getRouteNum() {
 		return routeNum;
 	}
 
-	public void setRouteNum(String routeNum) {
-		this.routeNum = routeNum.substring(0, 3)+"-"+this.direction;
+	public void setRouteNum(String fullRte) {
+		this.routeNum = fullRte.substring(0, 3)+"-"+this.direction;
 	}
 
 	public String getDestination() {
@@ -83,38 +106,22 @@ public static CurrentRouteInfo currentRouteInfoInstance = null;
 		return direction;
 	}
 
-	public void setDirection(String direction) {
-		int dir = Integer.valueOf(direction.substring(4,5));
+	public void setDirection(String fullRte) {
+		int dir = Integer.valueOf(fullRte.substring(4,5));
 		
 		switch (dir){
 		
 		case 1:
-			this.direction = "A";
+			this.direction = "A";// Forward
 		break;
 		
 		case 2 : 
-			this.direction = "R";
+			this.direction = "R"; // Backwards 
 		break;
 		case 3 :
-			this.direction = "C";
+			this.direction = "C"; // Circular
 		break;
-		
-		case 4 :
-			this.direction = "N";
-		break;
-		
-		case 5 :
-			this.direction = "E";
-		break;
-		
-		case 6 :
-			this.direction = "S";
-		break;
-		
-		case 7 :	
-			this.direction = "W";
-		break;
-		
+				
 		}
 	}
 
