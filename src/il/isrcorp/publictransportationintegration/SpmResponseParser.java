@@ -82,9 +82,12 @@ public class SpmResponseParser {
 	    currentRouteInfo.setRouteName(result[1]);
 		
 	    currentRouteInfo.updateRouteStopsETA();
+
+	    currentRouteInfo.isInRoute = true;
 	    
 	    // request current route in order to check if we need to build kml with route's coordinates
 	    messagesToSpmSender.sendGetCurrentRoute();
+	    
 	    
 		}
 		catch (NullPointerException npe){
@@ -124,15 +127,14 @@ public class SpmResponseParser {
 //		item.setCTP_INT(result[4]);
 		
 			
-		item.setMOTRtID(result[14]);
+//		item.setMOTRtID(result[14]);
 		
 		try{
 		
-			if(scheduleManager.schedule.put(item.getTripID(), item) != null)
-				MyUtils.saveScheduleToFile(MainActivity.SCHEDULE, scheduleManager);
+			scheduleManager.schedule.put(item.getTripID(), item);
 		}
 		catch (NullPointerException npe){
-			Utils.logger("failed to save schedule item");
+			Utils.logger("failed to add schedule item");
 		}
 		
 		
@@ -322,8 +324,6 @@ public class SpmResponseParser {
 
 		// If messageDetails is 3 it means we've received all messages
 		if(messageDetails.length ==3){
-			// save messages
-			MyUtils.saveMessagesManagerToFile(MainActivity.MESSAGES_MANAGER, messagesManager);
 			return true;
 		}
 		
@@ -344,7 +344,7 @@ public class SpmResponseParser {
 		messagesManager.messagesList.put(messageId,message);
 		
 		// request next message
-		messagesToSpmSender.sendRequestNextMessage(messageId);
+		messagesToSpmSender.sendRequestNextMessage(messageId+1);
 		return false;
 		}
 		catch (NumberFormatException formatException){

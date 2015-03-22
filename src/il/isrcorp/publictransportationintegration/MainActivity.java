@@ -133,15 +133,7 @@ public class MainActivity extends Activity{
 			ApplicationInfo.appInfoInstance = appInfo;
 		}
 		
-		// read schedule info from file if exists, else, create new instance.
-		scheduleManager = (MyUtils.readScheduleFile(SCHEDULE));  
-				
-				if(scheduleManager == null){
-					scheduleManager = ScheduleManager.getInstance();
-				}
-				else{
-					ScheduleManager.scheduleInstance = scheduleManager;
-				}
+		scheduleManager = ScheduleManager.getInstance();
 		
 		// read routeInfo if exists
 		currentRouteInfo  = MyUtils.readRouteInfoFile(ROUTE_INFO_FILE);
@@ -162,15 +154,7 @@ public class MainActivity extends Activity{
 			
 		}
 		
-		// read saved messages list
-		messagesManager = (MyUtils.readMessagesManagerFile(MESSAGES_MANAGER));  
-				
-				if(messagesManager == null){
-					messagesManager = MessagesManager.getInstance();
-				}
-				else{
-					MessagesManager.messagesManagerInstance = messagesManager;
-				}
+		messagesManager = MessagesManager.getInstance();
 				
 		
 	}

@@ -53,11 +53,11 @@ public class MessagesToSpmSender {
 	/**
 	 * Request login from SPM
 	 */
-	static byte[] spmloginCmd = new byte[]{'$','L','o','g','i','n',',','7',','};
+	String spmloginStartCmd = "$,L,o,g,i,n,,,7,,";
 	/**
 	 * Used to add at the end of Login command (after driver's id)
 	 */
-	static byte[] loginCmdEndCommas = new byte[]{',',',',',',','};
+	String loginCmdEndCommas = ",,,,,,,";
 	/**
 	 * Request current driver.
 	 */
@@ -71,6 +71,8 @@ public class MessagesToSpmSender {
      * Used to send $App ack to SPM
      */
     static byte[] $appCmd = new byte []{'$','A','p','p'};
+    
+    String getScheduleCmd = "SCHREQ";
     
     /**
      * Request current route info from server
@@ -107,61 +109,6 @@ public class MessagesToSpmSender {
 		}
 	}
 	
-	
-	/**	This method constructs and send login request using xml-pt
-	 * @param loginType represents input type (Manual/Card)
-	 * @param employeeType represents worker (Driver/Technical)
-	 * @param employeeId Id to check
-	 * @param runId runId to check (only for Drivers)
-	 * @param manualLoginReason indicates different reason for manual login<br>
-	 * 			   1 - Lost Id Card <br>
-   				   2 - Forgot Id Card <br>
-   				   3 - Defective Id Card<br>
-   				   4 - Defective Card Reader<br>
-	 * @param currentPreCheckVersion String represents current version of preCheck list
-	 * @param currentRoute current route if exists
-	 */
-	protected void sendLoginRequestByRdteNotify(int loginType, int employeeType, int employeeId, int runId, String manualLoginReason, String currentPreCheckVersion, String currentRoute){
-		String loginContent = "$RDTENotify,xml-pt\\c1\\c0";
-		
-		// if it's manual login we know if it's driver or technician and more details
-		if(loginType == 2){
-			loginContent += "\\c1="+loginType+"\\c2="+employeeType+"\\c3="+employeeId;
-			
-			if(runId != -1)
-				loginContent += "\\c4="+runId;	
-			
-			if("lostIdCard".equalsIgnoreCase(manualLoginReason))
-				loginContent += "\\c5="+1;
-			
-			if("forgotIdCard".equalsIgnoreCase(manualLoginReason))
-				loginContent += "\\c5="+2;
-			
-			if("defectiveIdCard".equalsIgnoreCase(manualLoginReason))
-				loginContent += "\\c5="+3;
-			
-			if("defectiveCardReader".equalsIgnoreCase(manualLoginReason))
-				loginContent += "\\c5="+4;
-		}
-		else{ // if it's card login, we only have the employee Id
-			loginContent += "\\c1="+loginType+"\\c3="+employeeId;
-		}
-		
-		if(!"".equalsIgnoreCase(currentPreCheckVersion)){
-			loginContent += "\\c7="+currentPreCheckVersion;
-		}
-		
-		if (currentRoute != null){
-			loginContent+="\\c8="+currentRoute;
-		}
-		
-//		$Zcommands.add(loginContent);
-//		
-//		loginContent = $Zcmd+loginContent;
-		
-		spmDataPublisher.sendMessage(loginContent.getBytes());
-		
-	}
 		/**
 	 * Request current driver from SPM.
 	 */
@@ -173,15 +120,8 @@ public class MessagesToSpmSender {
 	 * @param driverId driver ID to verify
 	 */
 	protected void sendLoginRequestToSPM(int driverId){
-		byte [] idBytes = MyUtils.intToBytes(driverId);
-		// we add 4 at the end in order to put 4 commas at the end
-		byte [] completeMessage = new byte [spmloginCmd.length+idBytes.length+4];
-		
-		System.arraycopy(spmloginCmd, 0, completeMessage, 0, spmloginCmd.length);
-		System.arraycopy(idBytes, 0, completeMessage, spmloginCmd.length, idBytes.length);
-		System.arraycopy(loginCmdEndCommas, 0, completeMessage, spmloginCmd.length+idBytes.length, loginCmdEndCommas.length);
-		
-		spmDataPublisher.sendMessage(completeMessage);
+		String completeMessage = spmloginStartCmd+driverId+loginCmdEndCommas;
+		spmDataPublisher.sendMessage(completeMessage.getBytes());
 		
 	}
 	
@@ -258,23 +198,6 @@ public class MessagesToSpmSender {
 		spmDataPublisher.sendMessage(message.getBytes());
 	}
 
-
-
-	/** Request current driver's schedule.
-	 * @param dbId unique DB id for this session
-	 */
-	public void sendGetSchedule(String dbId) {
-		String message = "xml-pt\\c1\\c2\\c999="+dbId;
-		
-		$Zcommands.add(message);
-		
-		message = $Zcmd+message;
-		
-		spmDataPublisher.sendMessage(message.getBytes());
-		
-		
-	}	
-
 	
 	/** This method handles SPM acknowledges for previous $Z sent by application.<br>
 	 *  We'll iterate over {@link MessagesToSpmSender#$Zcommands} list and check for each item if it equals the received $Z message.<br>
@@ -310,10 +233,10 @@ public class MessagesToSpmSender {
 	 * @param index the next first coord requested 
 	 */
 	public void sendGetRouteCoords(String index) {
-		System.out.println("sendin coords "+(getRouteCoordsCmd+index));
+		System.out.println("requesting coords "+(getRouteCoordsCmd+index));
 		
 		if(!spmDataPublisher.sendMessage((getRouteCoordsCmd+index).getBytes())){
-			System.out.println("sendin coords failed");
+			System.out.println("requesting coords failed "+(getRouteCoordsCmd+index));
 		}
 		
 	}
@@ -346,20 +269,6 @@ public class MessagesToSpmSender {
 	public void sendGetLastStop() {
 		spmDataPublisher.sendMessage(getLastStopCmd);	
 		}
-
-
-
-	/** Request current schedule from SPM second floor
-	 * 
-	 * @param driverId loggedIn driver Id
-	 * @param driverRunId loggedIn runId, if exists
-	 */
-	public void sendGetRdteSchedule(String driverId, String driverRunId) {
-		
-		String message = "$RDTENotify,SchedReq\\c"+driverId+"\\c"+driverRunId;
-		spmDataPublisher.sendMessage(message.getBytes());
-	}
-
 
 
 	/** This method handles responding to input devices status changes.
@@ -400,12 +309,26 @@ public class MessagesToSpmSender {
 		
 	}
 
-
-
-	public void sendRequestNextMessage(int currentMessageIndex) {
-		String message = "$msglist,"+(currentMessageIndex+1);
+	/** This method request next message from SPM.<br>
+	 *  This message is part of messages list, driver can send to office.
+	 * @param messageIndex requested message id
+	 */
+	public void sendRequestNextMessage(int messageIndex) {
+		String message = "$msglist,"+(messageIndex);
 		spmDataPublisher.sendMessage(message.getBytes());
 		
+	}
+
+	/**
+	 * This method request driver's schedule from office
+	 */
+	public void sendGetSchedule() {
+		
+		$Zcommands.add(getScheduleCmd);
+		
+		String message = $Zcmd+getScheduleCmd;
+		
+		spmDataPublisher.sendMessage(message.getBytes());
 	}
  
 }

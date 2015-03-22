@@ -34,6 +34,11 @@ public class CurrentRouteInfo implements Serializable{
 	 */
 	Calendar routeStartTime = Calendar.getInstance();
 	
+	/**
+	 * Flag indicates if bus is in route.
+	 */
+	transient public boolean isInRoute;
+	
 	public boolean startReceivingCoords = false;
 	
 	public boolean endReceivingCoords  = false;
@@ -213,6 +218,8 @@ public static CurrentRouteInfo currentRouteInfoInstance = null;
 	}
 	
 	public void updateRouteStopsETA(){
+		
+		// First we need to sort all stops list in ascending order.
 		bvc = new ValueComparator(routeStopsList);
 		sorted_map = new TreeMap<Integer,RouteStop>(bvc);
 		sorted_map.putAll(routeStopsList);
