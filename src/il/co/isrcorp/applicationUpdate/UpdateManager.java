@@ -306,6 +306,7 @@ public class UpdateManager{
 	  public void installApk(){
 		    moveApkFile();
 	        Intent intent = new Intent(Intent.ACTION_VIEW);
+	        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 	        Uri uri = Uri.fromFile(new File(mContext.getExternalFilesDir(null)+"/TEMP/"+config.apkName));
 	        intent.setDataAndType(uri, "application/vnd.android.package-archive");
 	        mContext.startActivity(intent);
