@@ -44,6 +44,7 @@ public class UpdateManager{
 		mContext = context;
 		UpdateUtils.mContext = mContext;
 		
+		int i = 1133;
 		// create SAVE folder for saving update configurations details
 		File updateConfigurationFolder =  new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SAVE");
 		
