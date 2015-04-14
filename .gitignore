@@ -15,7 +15,6 @@
 *.dmg
 *.gz
 *.iso
-*.jar
 *.rar
 *.tar
 *.zip
@@ -36,3 +35,4 @@
 ehthumbs.db
 Thumbs.db
 bin/
+gen/
