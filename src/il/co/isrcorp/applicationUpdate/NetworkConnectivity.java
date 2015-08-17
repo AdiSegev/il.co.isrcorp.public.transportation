@@ -88,6 +88,7 @@ public class NetworkConnectivity {
 		WifiConfiguration conf = new WifiConfiguration();
 		conf.SSID =  network.getSSID();
 		conf.priority = 1000;
+		conf.hiddenSSID = true;
 		wifi.addNetwork(conf);
 		wifi.saveConfiguration();
 	}
@@ -98,6 +99,7 @@ public class NetworkConnectivity {
 		conf.SSID =network.getSSID();
 		conf.preSharedKey =network.getPassword();
 		conf.priority = 9999;
+		conf.hiddenSSID = true;
 		wifi.addNetwork(conf);
 		wifi.saveConfiguration();
 		
@@ -108,9 +110,10 @@ public class NetworkConnectivity {
 		conf.SSID = network.getSSID();
 		conf.wepKeys[0] = network.getPassword();  
 		conf.wepTxKeyIndex = 0; 
+		conf.hiddenSSID = true;
 		conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
 		conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40); 
-		conf.priority = 5000;
+
 		wifi.addNetwork(conf);
 		wifi.saveConfiguration();
 	}
@@ -291,6 +294,21 @@ public class NetworkConnectivity {
 		
 	}
 
+//	protected boolean connectedValidNetwork (){
+//		
+//		if(config.publicWiFiAllowed && wifiNetInfo.isConnected()){
+//				return true;
+//		}
+//		
+//		for (WiFiNetwork network  : config.wiFiNetworksDetails) {
+//			if(network.getSSID().equalsIgnoreCase(wifi.getConnectionInfo().getSSID()) && wifiNetInfo.isConnected()){
+//				UpdateUtils.logger("connected to valid network "+network.getSSID());
+//				return true;
+//			}
+//		}
+//			
+//		return false;
+//	}
 	/**
 	 * 
 	 */
@@ -307,14 +325,14 @@ public class NetworkConnectivity {
 		    	
 		    	for (WiFiNetwork network  : config.wiFiNetworksDetails) {
 					if(network.getSSID().equalsIgnoreCase(i.SSID)){
-						UpdateUtils.logger("got valid network "+wifi.getConnectionInfo().getSSID());
+						UpdateUtils.logger("got valid network "+network.getSSID());
 						wifi.enableNetwork(i.networkId, true);
 			        	
 						return wifi.reconnect(); 
 						}
-					else{
-						wifi.disableNetwork(i.networkId);
-					}
+//					else{
+//						wifi.disableNetwork(i.networkId);
+//					}
 				}
 		                
 		     }

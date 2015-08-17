@@ -34,7 +34,8 @@ public class UpdateUtils {
 	 * @param fileName
 	 * @param updateConfig
 	 */
-	public static void saveUpdateConfigToFile(String fileName, UpdateConfiguration updateConfig) {
+	public static String saveUpdateConfigToFile(String fileName, UpdateConfiguration updateConfig) {
+		
 		File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/SAVE", fileName);
 		try {
 			FileOutputStream fos = new FileOutputStream(file, false);
@@ -43,15 +44,19 @@ public class UpdateUtils {
 			os.writeObject(updateConfig);
 			fos.close();
 			os.close();
+			return "";
 			
 		} catch (NullPointerException npe){
 			System.out.println("got null in save");
+			return ", Failed to save file, got NullPointerException";
 		}
 		catch (FileNotFoundException e) {
 			System.out.println("didnt write to file");
 			e.printStackTrace();
+			return ", Failed to save file, got FileNotFoundException";
 		} catch (IOException e) {
 			e.printStackTrace();
+			return ", Failed to save file, got IOException";
 		}
 
 	}

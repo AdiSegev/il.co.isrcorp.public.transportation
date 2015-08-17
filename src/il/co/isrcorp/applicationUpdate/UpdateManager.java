@@ -31,7 +31,17 @@ import android.widget.Toast;
  */
 public class UpdateManager{
 
+	private static final String SUCCESS = "Updater Configurations Saved.";
+	private static final String ILLEGAL_CONNECTION_TYPE = "Illegal Connection Type";
+	private static final String ILLEGAL_PUBLIC_ALLOWED_STATE = "Illegal Public Allowed State";
+	private static final String ILLEGAL_SECURITY_VALUE = "Illegal Security Value";
+	private static final String ILLEGAL_PREFER_WIFI_OVER_NETWORK_VALUE = "Illegal Prefer WiFi Over Network Value";
+	private static final String ILLEGAL_CONFIGURATION_STRUCTURE = "Illegal Configuration Structure";
+
 	private static final String UPDATE_CONFIG_FILENAME = "update_config";
+
+	private static final String UPDATE_VERSION = "1.4";
+	
 	private Context mContext;
 	UpdateConfiguration config;
 	private NetworkConnectivity networkConnectivity;
@@ -44,7 +54,7 @@ public class UpdateManager{
 		mContext = context;
 		UpdateUtils.mContext = mContext;
 		
-		int i = 1133;
+		
 		// create SAVE folder for saving update configurations details
 		File updateConfigurationFolder =  new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SAVE");
 		
@@ -124,15 +134,15 @@ public class UpdateManager{
 			        }
 			        
 			        boolean findFile=false;
-			        new Thread(new Runnable() {
-
-						public void run() {
-							Looper.prepare();
-							 Toast.makeText(mContext, "download start", Toast.LENGTH_SHORT).show();
+//			        new Thread(new Runnable() {
+//
+//						public void run() {
+//							Looper.prepare();
+//							 Toast.makeText(mContext, "download start", Toast.LENGTH_SHORT).show();
 							 UpdateUtils.logger("download start");
-							Looper.loop();
-						}
-					}).start();
+//							Looper.loop();
+//						}
+//					}).start();
 			       
 			        
 			        for (int i=0; i < files.length; i++) {
@@ -153,6 +163,7 @@ public class UpdateManager{
 			    try{
 			    	        while ( (bufferLength = inputStream.read(buffer)) > 0 ) {
 			    	            fileOutput.write(buffer, 0, bufferLength);
+			    	            fileOutput.flush();
 			    	        }
 			    }catch(SocketException socketException){
 			    	socketException.printStackTrace();
@@ -231,6 +242,8 @@ public class UpdateManager{
 	 */
 	protected boolean isApkFileValid() {
 		File file = new File(mContext.getExternalFilesDir(null)+"/SAVE",config.apkName);
+		UpdateUtils.logger("saved file length: "+file.length()+", apk length: "+config.getApkFileLength());
+		
 		if(file.length() != config.getApkFileLength())
 			return false;
 		
@@ -359,31 +372,34 @@ public class UpdateManager{
 	 * 
 	 * @param updateConficInfo - complete updater configuration
 	 */
-	public void updateConfigurationReceived(String [] updateConficInfo){
+	public String updateConfigurationReceived(String [] updateConficInfo){
+		String result;
 		
-		// check if we've successfully saved received configuration before save it to file.
-		if(populateUpdateConfig(updateConficInfo)){
-			UpdateUtils.saveUpdateConfigToFile(UPDATE_CONFIG_FILENAME, config);
+		result = populateUpdateConfig(updateConficInfo);
+
+		// check if we've successfully saved received configuration before save it to file.		
+		if(SUCCESS.equalsIgnoreCase(result)){
+		
+		result += UpdateUtils.saveUpdateConfigToFile(UPDATE_CONFIG_FILENAME, config);
 			
 			// updater networkConnecticon reference with new updater config
-			networkConnectivity.setUpdateConfig(config);
+		networkConnectivity.setUpdateConfig(config);
 		}
 		
-		
-		
-		
-		
+		return result;
 	}
 	
+
 	/** This method populate the {@link UpdateConfiguration#config} with the new updater configuration info.
 	 *  
 	 * @param updateConfigInfo new updater configuration info
 	 */
-	private boolean populateUpdateConfig(String [] updateConfigInfo) {
+	private String populateUpdateConfig(String [] updateConfigInfo) {
 		// clear previous config if we had
 				if(UpdateConfiguration.config!= null){
 					UpdateConfiguration.config = null;
 				}
+		String result = "";
 		
 		config = UpdateConfiguration.getInstance();
 	
@@ -409,53 +425,79 @@ public class UpdateManager{
 			case 4:
 				config.connectionType = NetworkConnectivity.TYPE_ALL;
 				break;
+				default:
+					result = ILLEGAL_CONNECTION_TYPE+": "+updateConfigInfo[6];
+				break;
 			}
 			
 		}
 		catch (NumberFormatException formatException){
 			UpdateUtils.logger("illegal connection type: "+updateConfigInfo[6]);
 			formatException.printStackTrace();
+			result = ILLEGAL_CONNECTION_TYPE+": "+updateConfigInfo[6];
 		}
 		
 		// we need to check if we should use WiFi. If we souldn't use it, we can ignore the following fields.
 		if (config.connectionType == NetworkConnectivity.TYPE_WIFI ||config.connectionType == NetworkConnectivity.TYPE_ALL){
 		try{
 			int publicAllowed = Integer.valueOf(updateConfigInfo[7]);
-			config.publicWiFiAllowed = publicAllowed == 1 ? true:false;	
+			
+			if(publicAllowed == 1){
+			config.publicWiFiAllowed = true;
+			} else if(publicAllowed == 2){
+				config.publicWiFiAllowed = false;
+			} else{
+				result += " "+ILLEGAL_PUBLIC_ALLOWED_STATE+": "+updateConfigInfo[7];
+			}
 			}
 			catch (NumberFormatException formatException){
 				UpdateUtils.logger("illegal publicWiFiAllowed: "+updateConfigInfo[7]);
 				formatException.printStackTrace();
+				result += " "+ILLEGAL_PUBLIC_ALLOWED_STATE+": "+updateConfigInfo[7];
 			}
 			
-			populateWiFiNetworks(updateConfigInfo[8]);
+		result += populateWiFiNetworks(updateConfigInfo[8]);
 			
 		}
 		
 		// if we're allowed to use all network connections, we need to know if we should prefer wiFi over mobile network.
 		if(config.connectionType == NetworkConnectivity.TYPE_ALL){
 			try{
-				int prefferdConnection = Integer.valueOf(updateConfigInfo[9]);
-				config.preferWiFiOverMobile = prefferdConnection == 1 ? true:false;	
+				int preferdConnection = Integer.valueOf(updateConfigInfo[9]);
+				
+				if(preferdConnection == 1){
+					config.preferWiFiOverMobile = true;
+					} else if(preferdConnection == 2){
+						config.preferWiFiOverMobile = false;
+					} else{
+						result += " "+ILLEGAL_PREFER_WIFI_OVER_NETWORK_VALUE+": "+updateConfigInfo[9];					}
+				
 				}
 				catch (NumberFormatException formatException){
 					UpdateUtils.logger("illegal preferWiFiOverMobile: "+updateConfigInfo[9]);
 					formatException.printStackTrace();
+					result += " "+ILLEGAL_PREFER_WIFI_OVER_NETWORK_VALUE+": "+updateConfigInfo[9];
 				}
 		}
 		}
 		catch (IndexOutOfBoundsException boundsException){
 			boundsException.printStackTrace();
-			return false;
+			result += " "+ILLEGAL_CONFIGURATION_STRUCTURE;
+			return result;
 		}
 		
-		return true;
+		if("".equalsIgnoreCase(result)){
+			return SUCCESS;
+		}else {
+		return result;
+		}
 	}
-
+	
 	/** This method populate {@link UpdateConfiguration#wiFiNetworksDetails}} with allowed networks
 	 * @param networksInfo complete info of networks
 	 */
-	private void populateWiFiNetworks(String networksInfo) {
+	private String populateWiFiNetworks(String networksInfo) {
+		String result = "";
 		String [] wifiNetworkList = networksInfo.split(";");
 		String [] splitedNetwork;
 		WiFiNetwork network;
@@ -467,24 +509,35 @@ public class UpdateManager{
 			
 			try{
 			int networkSecurity = Integer.valueOf(splitedNetwork[0]);
+			
+			if(networkSecurity != WiFiNetwork.NOT_SECURED && networkSecurity != WiFiNetwork.WEP_SECURED && networkSecurity != WiFiNetwork.WPA_SECURED){
+				result =" "+ ILLEGAL_SECURITY_VALUE+": "+wifiNetworkList[0];
+				return result;
+			}
 			network.setSecurity(Integer.valueOf(splitedNetwork[0]));
 			// if it's secured network, we need to store the password
-			if(networkSecurity != WiFiNetwork.NOT_SECURED){
+			if(networkSecurity == WiFiNetwork.NOT_SECURED){
 			
 			network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
-			network.setPassword("\""+ splitedNetwork[2] +"\""); // Please note the quotes. String should contain password in quotes
+			
 			}
-			else{
+			else if(networkSecurity == WiFiNetwork.WPA_SECURED){
 				network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
+				network.setPassword("\""+ splitedNetwork[2] +"\""); // Please note the quotes. String should contain password in quotes
+			}
+			else if(networkSecurity == WiFiNetwork.WEP_SECURED){
+				network.setSSID("\""+ splitedNetwork[1] +"\""); //  Please note the quotes. String should contain ssid in quotes
+				network.setPassword(splitedNetwork[2]); // Please note the quotes. String should contain password in quotes
 			}
 			}
 			catch (NumberFormatException formatException){
 				UpdateUtils.logger("illegal security: "+splitedNetwork[0]);
+				result = " "+ILLEGAL_SECURITY_VALUE+": "+splitedNetwork[0];
 			}
 			
 			
 			config.wiFiNetworksDetails.add(network);
-			return;
+			return result;
 		}
 		
 		for (String networkItem : wifiNetworkList) {
@@ -493,6 +546,12 @@ public class UpdateManager{
 			
 			try{
 			int networkSecurity = Integer.valueOf(splitedNetwork[0]);
+			
+			if(networkSecurity != WiFiNetwork.NOT_SECURED && networkSecurity != WiFiNetwork.WEP_SECURED && networkSecurity != WiFiNetwork.WPA_SECURED){
+				result = " "+ILLEGAL_SECURITY_VALUE+": "+networkSecurity;
+				return result;
+			}
+			
 			network.setSecurity(Integer.valueOf(splitedNetwork[0]));
 			// if it's secured network, we need to store the password
 			if(networkSecurity != WiFiNetwork.NOT_SECURED){
@@ -506,14 +565,16 @@ public class UpdateManager{
 			}
 			catch (NumberFormatException formatException){
 				UpdateUtils.logger("illegal security: "+splitedNetwork[0]);
+				result += " "+ILLEGAL_SECURITY_VALUE+": "+splitedNetwork[0];
 			}
 			
 			
 			config.wiFiNetworksDetails.add(network);
 			
 		}
+		
+		return result;
 	}
-
 	/**
 	 * This method would be called by the application when it being informed by the server of new app version.
 	 */
@@ -617,8 +678,11 @@ public class UpdateManager{
 	
 	private String addNetworkDetails(WiFiNetwork network){
 		String details = ""+network.getSecurity();
-		details +="*"+network.getSSID().substring(1, network.getSSID().length()-1)+"*";
-		details +=(network.getPassword()!=null ? network.getPassword().substring(1, network.getPassword().length()-1):" ")+";";
+		String data;
+		data = network.getSSID().replaceAll("\"", "").trim();
+		details +="*"+data+"*";
+		data = (network.getPassword()!=null ? network.getPassword().replaceAll("\"", "").trim():" ");
+		details +=data;
 		return details;
 	}
 	public void close() {
